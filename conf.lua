@@ -1,8 +1,8 @@
 function love.conf(t)
-    t.window.fullscreen = false
+    t.window.fullscreen = true
     t.window.fullscreentype = "desktop" -- Borderless fullscreen
     t.window.title = "Conveyance"
-    t.window.width = 1000
-    t.window.height = 1000
+    t.window.resizable = false
+    t.window.borderless = true
     t.console = true
 end

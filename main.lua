@@ -6,6 +6,13 @@ function love.load()
     stoneimage = love.graphics.newImage("stone.png")
     forestimage = love.graphics.newImage("forest.png")
 
+    instructions = {
+        "Left click to place a tile",
+        "Right click to cycle through tiles",
+        "Press 'D' to toggle debug mode",
+        "Press 'Esc' to quit"
+    }
+
     love.math.setRandomSeed(os.time() + love.math.random())
 
     grid = {}
@@ -23,6 +30,7 @@ function love.load()
     loadedTileInd = 1
 
     mouseHeld = false
+    debugHeld = false
     currentCellMouseHeld = {0, 0}
     currentCellMouseHover = {0, 0}
 
@@ -136,13 +144,32 @@ function love.update(dt)
     -- If Esc is pressed, exit the game
     if love.keyboard.isDown("escape") then
         love.event.quit()
-    elseif love.keyboard.isDown("d") then
+    end
+    
+    if love.keyboard.isDown("d") and not debugHeld then
         debugmode = not debugmode
-        debug.debug()
+        debugHeld = true
+        -- debug.debug()
+    elseif not love.keyboard.isDown("d") then
+        debugHeld = false
     end
 end
 
 function love.draw()
+    -- Draw the instructions
+    todraw = instructions
+    if debugmode and not todraw[5] then
+        table.insert(todraw, "Debug mode enabled")
+    elseif not debugmode and todraw[5] then
+        table.remove(todraw, 5)
+    end
+
+    for i, instruction in ipairs(todraw) do
+        if i == 5 then love.graphics.setColor(1, 0, 0) end
+        love.graphics.print(instruction, 10, 10 + 20 * i)
+        if i == 5 then love.graphics.setColor(1, 1, 1) end
+    end
+
     tileMappings = {
         [0] = waterimage, -- Water
         [1] = landimage, -- Land
@@ -163,6 +190,10 @@ function love.draw()
         for j = 1, grid.height do
             local tile = grid[i][j]
             local texture = tileMappings[tile] or waterimage
+            if tile >= 100 then
+                love.graphics.setColor(0.8, 0.8, 0.8)
+            end
+            texture = tileMappings[tile % 100] or waterimage
             love.graphics.draw(texture, grid_x + (i - 1) * cell_size, grid_y + (j - 1) * cell_size, 0,
                 cell_size / texture:getWidth(), cell_size / texture:getHeight())
 
