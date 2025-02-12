@@ -1,28 +1,20 @@
 require "instructionsM"
 require "game"
+require "images"
+require "debug"
 instructionsM.test()
 game.test()
 
 function love.load()
-    debugmode = false
-
-    waterimage = love.graphics.newImage("assets/water.png")
-    landimage = love.graphics.newImage("assets/land.png")
-    beachimage = love.graphics.newImage("assets/sand.png")
-    stoneimage = love.graphics.newImage("assets/stone.png")
-    forestimage = love.graphics.newImage("assets/forest.png")
-
-    quarryimage = love.graphics.newImage("assets/quarry.png")
-    -- beltile = love.graphics.newImage("belt.png")
-
+    -- Load instructions and default inventory
     instructions = instructionsM.default
-
     inventory = game.startInventory
 
+    -- Set Love2D Ransom Seed
     love.math.setRandomSeed(game.seed or (os.time() + love.math.random()))
 
+    -- Set up grid
     grid = game.grid
-    -- Create a 10x10 grid
     for i = 1, grid.width do
         grid[i] = {}
         for j = 1, grid.height do
@@ -30,23 +22,31 @@ function love.load()
         end
     end
 
+    -- Load Tiles
     availableTiles = game.tileList
     loadedTileInd = 1
 
+    -- Set up mouse and key variables for input handling
     mouseHeld = false
-    keyHeld = false
+    keyHeld = {
+        escape = false,
+        d = false,
+        c = false,
+        r = false
+    }
     currentCellMouseHeld = {0, 0}
     currentCellMouseHover = {0, 0}
 
     -- Use perlin noise to generate a random grid
     local offsetX = love.math.random() * game.randomSize
     local offsetY = love.math.random() * game.randomSize
+    -- Adjust this value to zoom in or out on the noise
     for i = 1, grid.width do
         for j = 1, grid.height do
-            local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
-            if noiseValue > 0.6 then
+            local noiseValue = love.math.noise(i / game.continentality + offsetX, j / game.continentality + offsetY)
+            if noiseValue > game.weight.land then
                 grid[i][j] = 1 -- Land
-            elseif noiseValue > 0.4 then
+            elseif noiseValue > game.weight.beach then
                 grid[i][j] = 2 -- Beach
             else
                 grid[i][j] = 0 -- Water
@@ -54,13 +54,12 @@ function love.load()
         end
     end
 
-    -- Use perlin noise as a biome map, with 2 biomes, 1 being land, 2 being stone
     local offsetX = love.math.random() * 1000
     local offsetY = love.math.random() * 1000
     for i = 1, grid.width do
         for j = 1, grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
-            if noiseValue > 0.8 and grid[i][j] == 1 then -- Increased threshold to 0.8
+            if noiseValue > game.weight.stone and grid[i][j] == 1 then
                 grid[i][j] = 3 -- Stone
             end
         end
@@ -71,7 +70,7 @@ function love.load()
     for i = 1, grid.width do
         for j = 1, grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
-            if noiseValue > 0.3 and grid[i][j] == 1 then -- Increased threshold to 0.8
+            if noiseValue > game.weight.forest then
                 grid[i][j] = 4 -- Forest
             end
         end
@@ -167,22 +166,40 @@ function love.update(dt)
 
     -- If Esc is pressed, exit the game
     if love.keyboard.isDown("escape") then
-        love.event.quit()
+        if not keyHeld.escape then
+            love.event.quit()
+            keyHeld.escape = true
+        end
+    else
+        keyHeld.escape = false
     end
 
-    if love.keyboard.isDown("d") and not keyHeld then
-        debugmode = not debugmode
-        keyHeld = true
-        -- debug.debug()
-    elseif not love.keyboard.isDown("d") then
-        keyHeld = false
+    if love.keyboard.isDown("d") then
+        if not keyHeld.d then
+            debugmode = not debugmode
+            keyHeld.d = true
+        end
+    else
+        keyHeld.d = false
     end
 
-    if love.keyboard.isDown("c") and not keyHeld then
-        keyHeld = true
-        game.openCraftingMenu()
-    elseif not love.keyboard.isDown("c") then
-        keyHeld = false
+    if love.keyboard.isDown("c") then
+        if not keyHeld.c then
+            game.openCraftingMenu()
+            keyHeld.c = true
+        end
+    else
+        keyHeld.c = false
+    end
+
+    -- Restart the game
+    if love.keyboard.isDown("r") then
+        if not keyHeld.r and debugmode then
+            love.load()
+            keyHeld.r = true
+        end
+    else
+        keyHeld.r = false
     end
 end
 
@@ -190,7 +207,7 @@ function love.draw()
     todraw = instructions
 
     if debugmode and not todraw[5] then
-        table.insert(todraw, "Debug mode enabled")
+        table.insert(todraw, "Debug mode enabled.\nPress 'R' to reload the game.")
     elseif not debugmode and todraw[5] then
         table.remove(todraw, 5)
     end
@@ -199,7 +216,15 @@ function love.draw()
     instructionsM.drawInventory(inventory)
 
     tileMappings = game.tileMap
-    tileNames = game.tileNames
+    tileNames = {
+        [0] = "Water",
+        [1] = "Land",
+        [2] = "Beach",
+        [3] = "Stone",
+        [4] = "Forest",
+        [5] = "Quarry"
+    }
+
     -- Draw the grid screen height by screen height in the center of the screen
     local screen_width = love.graphics.getWidth()
     local screen_height = love.graphics.getHeight()
@@ -260,4 +285,9 @@ function love.draw()
     local tileName = tileNames[loadedTileInd] or "Unknown"
     love.graphics.print(tileName, preview_x + tile_width + 10,
         preview_y + tile_height / 2 - love.graphics.getFont():getHeight() / 2)
+
+    if game.showFPS then
+        local fps = love.timer.getFPS()
+        love.graphics.print("FPS: " .. fps, screen_width - 70, 10)
+    end
 end

@@ -1,4 +1,8 @@
+require "images"
+
 game = {}
+
+game.showFPS = true
 
 function game.test()
     print("Game loaded")
@@ -9,8 +13,8 @@ function game.openCraftingMenu(text)
 end
 
 game.grid = {}
-game.grid.width = 30
-game.grid.height = 30
+game.grid.width = 40
+game.grid.height = 40
 
 game.tileList = {0, 1, 2, 3, 4, 5}
 game.tileMap = {
@@ -21,19 +25,18 @@ game.tileMap = {
     [4] = forestimage, -- Forest
     [5] = quarryimage -- Quarry
 }
-game.tileNames = {
-    [0] = "Water",
-    [1] = "Land",
-    [2] = "Beach",
-    [3] = "Stone",
-    [4] = "Forest",
-    [5] = "Quarry"
-}
 
 game.startInventory = {
     Stone = 0,
     Quarries = 1
 }
 
-game.randomSize = 1
+game.randomSize = 10000
+game.continentality = 20
 -- game.seed = 12345
+game.weight = {
+    land = 0.5,
+    beach = 0.35,
+    stone = 0.8,
+    forest = 0.6
+}
