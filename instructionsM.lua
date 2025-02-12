@@ -1,6 +1,6 @@
 instructionsM = {}
 
-instructionsM.default = {"Left click to place a tile", "Right click to cycle through tiles",
+instructionsM.default = {"Left click to place a tile", "Right click or 'Q' to cycle through tiles",
                          "Press 'C' to bring up the crafting menu", "Press 'D' to toggle debug mode",
                          "Press 'Esc' to quit"}
 
@@ -20,10 +20,10 @@ function instructionsM.draw(text)
     end
 end
 
-function instructionsM.drawInventory(inventory)
-    love.graphics.print("Inventory", 10, 200)
+function instructionsM.drawStorage(storage)
+    love.graphics.print("Storage", 10, 200)
     local y = 220
-    for item, count in pairs(inventory) do
+    for item, count in pairs(storage) do
         love.graphics.print(item .. ": " .. count, 10, y)
         y = y + 20
     end
