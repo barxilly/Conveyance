@@ -1,5 +1,9 @@
 instructionsM = {}
 
+instructionsM.default = {"Left click to place a tile", "Right click to cycle through tiles",
+                         "Press 'C' to bring up the crafting menu", "Press 'D' to toggle debug mode",
+                         "Press 'Esc' to quit"}
+
 function instructionsM.test()
     print("InstructionsM loaded")
 end

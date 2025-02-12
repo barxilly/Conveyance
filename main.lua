@@ -1,5 +1,7 @@
 require "instructionsM"
+require "game"
 instructionsM.test()
+game.test()
 
 function love.load()
     debugmode = false
@@ -13,19 +15,13 @@ function love.load()
     quarryimage = love.graphics.newImage("assets/quarry.png")
     -- beltile = love.graphics.newImage("belt.png")
 
-    instructions = {"Left click to place a tile", "Right click to cycle through tiles",
-                    "Press 'C' to bring up the crafting menu", "Press 'D' to toggle debug mode", "Press 'Esc' to quit"}
+    instructions = instructionsM.default
 
-    inventory = {
-        Stone = 0,
-        Quarries = 1
-    }
+    inventory = game.startInventory
 
-    love.math.setRandomSeed(os.time() + love.math.random())
+    love.math.setRandomSeed(game.seed or (os.time() + love.math.random()))
 
-    grid = {}
-    grid.width = 30
-    grid.height = 30
+    grid = game.grid
     -- Create a 10x10 grid
     for i = 1, grid.width do
         grid[i] = {}
@@ -34,17 +30,17 @@ function love.load()
         end
     end
 
-    availableTiles = {0, 1, 2, 3, 4, 5}
+    availableTiles = game.tileList
     loadedTileInd = 1
 
     mouseHeld = false
-    debugHeld = false
+    keyHeld = false
     currentCellMouseHeld = {0, 0}
     currentCellMouseHover = {0, 0}
 
     -- Use perlin noise to generate a random grid
-    local offsetX = love.math.random() * 100
-    local offsetY = love.math.random() * 100
+    local offsetX = love.math.random() * game.randomSize
+    local offsetY = love.math.random() * game.randomSize
     for i = 1, grid.width do
         for j = 1, grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
@@ -174,12 +170,19 @@ function love.update(dt)
         love.event.quit()
     end
 
-    if love.keyboard.isDown("d") and not debugHeld then
+    if love.keyboard.isDown("d") and not keyHeld then
         debugmode = not debugmode
-        debugHeld = true
+        keyHeld = true
         -- debug.debug()
     elseif not love.keyboard.isDown("d") then
-        debugHeld = false
+        keyHeld = false
+    end
+
+    if love.keyboard.isDown("c") and not keyHeld then
+        keyHeld = true
+        game.openCraftingMenu()
+    elseif not love.keyboard.isDown("c") then
+        keyHeld = false
     end
 end
 
@@ -195,23 +198,8 @@ function love.draw()
     instructionsM.draw(todraw)
     instructionsM.drawInventory(inventory)
 
-    tileMappings = {
-        [0] = waterimage, -- Water
-        [1] = landimage, -- Land
-        [2] = beachimage, -- Beach
-        [3] = stoneimage, -- Stone
-        [4] = forestimage, -- Forest
-        [5] = quarryimage -- Quarry
-    }
-    tileNames = {
-        [0] = "Water",
-        [1] = "Land",
-        [2] = "Beach",
-        [3] = "Stone",
-        [4] = "Forest",
-        [5] = "Quarry"
-    }
-
+    tileMappings = game.tileMap
+    tileNames = game.tileNames
     -- Draw the grid screen height by screen height in the center of the screen
     local screen_width = love.graphics.getWidth()
     local screen_height = love.graphics.getHeight()
