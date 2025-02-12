@@ -1,16 +1,24 @@
+require "instructionsM"
+instructionsM.test()
+
 function love.load()
     debugmode = false
-    waterimage = love.graphics.newImage("water.png")
-    landimage = love.graphics.newImage("land.png")
-    beachimage = love.graphics.newImage("sand.png")
-    stoneimage = love.graphics.newImage("stone.png")
-    forestimage = love.graphics.newImage("forest.png")
 
-    instructions = {
-        "Left click to place a tile",
-        "Right click to cycle through tiles",
-        "Press 'D' to toggle debug mode",
-        "Press 'Esc' to quit"
+    waterimage = love.graphics.newImage("assets/water.png")
+    landimage = love.graphics.newImage("assets/land.png")
+    beachimage = love.graphics.newImage("assets/sand.png")
+    stoneimage = love.graphics.newImage("assets/stone.png")
+    forestimage = love.graphics.newImage("assets/forest.png")
+
+    quarryimage = love.graphics.newImage("assets/quarry.png")
+    -- beltile = love.graphics.newImage("belt.png")
+
+    instructions = {"Left click to place a tile", "Right click to cycle through tiles",
+                    "Press 'C' to bring up the crafting menu", "Press 'D' to toggle debug mode", "Press 'Esc' to quit"}
+
+    inventory = {
+        Stone = 0,
+        Quarries = 1
     }
 
     love.math.setRandomSeed(os.time() + love.math.random())
@@ -26,7 +34,7 @@ function love.load()
         end
     end
 
-    availableTiles = {0, 1, 2, 3, 4}
+    availableTiles = {0, 1, 2, 3, 4, 5}
     loadedTileInd = 1
 
     mouseHeld = false
@@ -88,7 +96,21 @@ function selectNextTile()
     prev = true
 end
 
+globalclock = 0
+laststone = 0
 function love.update(dt)
+    -- Every 2 seconds, add a stone to the inventory for each quarry
+    globalclock = globalclock + dt
+    if globalclock % 2 < 0.1 then
+        for i = 1, grid.width do
+            for j = 1, grid.height do
+                if grid[i][j] == 5 then
+                    inventory["Stone"] = inventory["Stone"] + 1
+                end
+            end
+        end
+    end
+
     -- If the mouse is pressed, change the value of the cell under the mouse and invert colors
     if love.mouse.isDown(1) then
         local screen_width = love.graphics.getWidth()
@@ -102,7 +124,13 @@ function love.update(dt)
         local j = math.floor((mouse_y - grid_y) / cell_size) + 1
         if not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j) then
             if i >= 1 and i <= grid.width and j >= 1 and j <= grid.height then
-                grid[i][j] = loadedTileInd
+                if loadedTileInd == 5 and ((not (grid[i][j] == 3 or grid[i][j] == 103)) or inventory["Quarries"] == 0) then
+                else
+                    grid[i][j] = loadedTileInd
+                    if loadedTileInd == 5 then
+                        inventory["Quarries"] = inventory["Quarries"] - 1
+                    end
+                end
             end
             currentCellMouseHeld = {i, j}
         end
@@ -145,7 +173,7 @@ function love.update(dt)
     if love.keyboard.isDown("escape") then
         love.event.quit()
     end
-    
+
     if love.keyboard.isDown("d") and not debugHeld then
         debugmode = not debugmode
         debugHeld = true
@@ -156,26 +184,32 @@ function love.update(dt)
 end
 
 function love.draw()
-    -- Draw the instructions
     todraw = instructions
+
     if debugmode and not todraw[5] then
         table.insert(todraw, "Debug mode enabled")
     elseif not debugmode and todraw[5] then
         table.remove(todraw, 5)
     end
 
-    for i, instruction in ipairs(todraw) do
-        if i == 5 then love.graphics.setColor(1, 0, 0) end
-        love.graphics.print(instruction, 10, 10 + 20 * i)
-        if i == 5 then love.graphics.setColor(1, 1, 1) end
-    end
+    instructionsM.draw(todraw)
+    instructionsM.drawInventory(inventory)
 
     tileMappings = {
         [0] = waterimage, -- Water
         [1] = landimage, -- Land
         [2] = beachimage, -- Beach
         [3] = stoneimage, -- Stone
-        [4] = forestimage -- Forest
+        [4] = forestimage, -- Forest
+        [5] = quarryimage -- Quarry
+    }
+    tileNames = {
+        [0] = "Water",
+        [1] = "Land",
+        [2] = "Beach",
+        [3] = "Stone",
+        [4] = "Forest",
+        [5] = "Quarry"
     }
 
     -- Draw the grid screen height by screen height in the center of the screen
@@ -219,17 +253,23 @@ function love.draw()
     end
 
     -- Preview the next tile in a circle
-    local preview_size = 20
-    local preview_x = screen_width - preview_size - 25
+    local preview_size = 40
+    local preview_x = screen_width - preview_size - 65
     local preview_y = screen_height - preview_size - 25
     local tile = tileMappings[loadedTileInd]
-    local scale_x = preview_size
-    local scale_y = preview_size
-    local tile_width = (tile:getWidth() * scale_x) + 2
-    local tile_height = (tile:getHeight() * scale_y) + 2
+
+    -- Calculate scale factors to fit the preview size
+    local scale_x = preview_size / tile:getWidth()
+    local scale_y = preview_size / tile:getHeight()
+
+    local tile_width = tile:getWidth() * scale_x
+    local tile_height = tile:getHeight() * scale_y
     local circle_x = preview_x + tile_width / 2
     local circle_y = preview_y + tile_height / 2
 
     love.graphics.draw(tile, preview_x, preview_y, 0, scale_x, scale_y)
     love.graphics.rectangle("line", preview_x, preview_y, tile_width, tile_height)
+    local tileName = tileNames[loadedTileInd] or "Unknown"
+    love.graphics.print(tileName, preview_x + tile_width + 10,
+        preview_y + tile_height / 2 - love.graphics.getFont():getHeight() / 2)
 end
