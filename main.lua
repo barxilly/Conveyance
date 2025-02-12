@@ -6,6 +6,12 @@ instructionsM.test()
 game.test()
 
 function love.load()
+    love.graphics.setDefaultFilter("nearest", "nearest")
+
+    for _, image in pairs(game.tileMap) do
+        image:setFilter("nearest", "nearest")
+    end
+
     -- Load instructions and default inventory
     instructions = instructionsM.default
     inventory = game.startInventory
@@ -70,10 +76,24 @@ function love.load()
     for i = 1, grid.width do
         for j = 1, grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
-            if noiseValue > game.weight.forest then
+            if noiseValue > game.weight.forest and grid[i][j] == 1 then
                 grid[i][j] = 4 -- Forest
             end
         end
+    end
+
+    -- If more than 60% of tiles are water, reload 
+    local waterCount = 0
+    for i = 1, grid.width do
+        for j = 1, grid.height do
+            if grid[i][j] == 0 then
+                waterCount = waterCount + 1
+            end
+        end
+    end
+    if waterCount > grid.width * grid.height * 0.6 then
+        print("Reloading due to too much water")
+        love.load()
     end
 end
 
