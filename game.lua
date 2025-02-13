@@ -2,7 +2,7 @@ require "images"
 
 game = {}
 
-game.version = "0.0.1-proto"
+game.version = "0.0.3-proto"
 
 game.showFPS = true
 
@@ -15,8 +15,8 @@ function game.openCraftingMenu(text, cmOpen)
 end
 
 game.grid = {}
-game.grid.width = 30
-game.grid.height = 30
+game.grid.width = 25
+game.grid.height = 25
 
 game.tileList = {0, 1, 2, 3, 4, 5, 6}
 game.tileMap = {

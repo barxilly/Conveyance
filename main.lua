@@ -108,6 +108,20 @@ function love.load()
     end
     local storageTile = landTiles[love.math.random(1, #landTiles)]
     grid[storageTile[1]][storageTile[2]] = 6
+
+    -- If there's more than one storage tile, reload
+    local storageCount = 0
+    for i = 1, grid.width do
+        for j = 1, grid.height do
+            if grid[i][j] == 6 then
+                storageCount = storageCount + 1
+            end
+        end
+    end
+    if storageCount > 1 then
+        print("Reloading due to too many storage tiles")
+        love.load()
+    end
 end
 
 initial = {}
@@ -116,6 +130,11 @@ clock = 0
 prev = false
 globalclock = 0
 laststone = 0
+cameraOffsetX = 0
+cameraOffsetY = 0
+cameraSpeed = 200
+zoomFactor = 1
+zoomSpeed = 0.3
 
 function selectNextTile()
     loadedTileInd = loadedTileInd + 1
@@ -151,24 +170,26 @@ function love.update(dt)
         end
     end
 
+    -- Adjust mouse coordinates based on camera offset and zoom factor
+    local screen_width = love.graphics.getWidth()
+    local screen_height = love.graphics.getHeight()
+    local grid_size = screen_height * zoomFactor
+    local cell_size = grid_size / grid.width
+    local grid_x = (screen_width - grid_size) / 2 + cameraOffsetX
+    local grid_y = (screen_height - grid_size) / 2 + cameraOffsetY
+    local mouse_x, mouse_y = love.mouse.getPosition()
+    local i = math.floor((mouse_x - grid_x) / cell_size) + 1
+    local j = math.floor((mouse_y - grid_y) / cell_size) + 1
+
     -- If the mouse is pressed, change the value of the cell under the mouse and invert colors
     if love.mouse.isDown(1) and not game.cmOpen then
-        local screen_width = love.graphics.getWidth()
-        local screen_height = love.graphics.getHeight()
-        local grid_size = screen_height
-        local cell_size = grid_size / grid.width
-        local grid_x = (screen_width - grid_size) / 2
-        local grid_y = (screen_height - grid_size) / 2
-        local mouse_x, mouse_y = love.mouse.getPosition()
-        local i = math.floor((mouse_x - grid_x) / cell_size) + 1
-        local j = math.floor((mouse_y - grid_y) / cell_size) + 1
-
         if not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j) then
             if i >= 1 and i <= grid.width and j >= 1 and j <= grid.height then
                 if grid[i][j] > 100 then
                     grid[i][j] = grid[i][j] - 100
                 end
-                if loadedTileInd == 5 and ((not (grid[i][j] == 3 or grid[i][j] == 103)) or storage["Quarry"] == 0) then
+                if loadedTileInd == 5 and not (grid[i][j] == 3 or grid[i][j] == 103) then
+                    hoverpvShake.time = 0.5
                 elseif storage[game.invMap[loadedTileInd]] > 0 then
                     if loadedTileInd == grid[i][j] then
                         previewShake.time = 0.5
@@ -191,15 +212,6 @@ function love.update(dt)
         end
         mouseHeld = true
     else
-        local screen_width = love.graphics.getWidth()
-        local screen_height = love.graphics.getHeight()
-        local grid_size = screen_height
-        local cell_size = grid_size / grid.width
-        local grid_x = (screen_width - grid_size) / 2
-        local grid_y = (screen_height - grid_size) / 2
-        local mouse_x, mouse_y = love.mouse.getPosition()
-        local i = math.floor((mouse_x - grid_x) / cell_size) + 1
-        local j = math.floor((mouse_y - grid_y) / cell_size) + 1
         if (not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j)) and not game.cmOpen then
             if i >= 1 and i <= grid.width and j >= 1 and j <= grid.height then
                 if grid[i][j] < 100 then
@@ -251,7 +263,6 @@ function love.update(dt)
         keyHeld.c = false
     end
 
-    -- Restart the game
     if love.keyboard.isDown("r") then
         if not keyHeld.r and debugmode then
             love.load()
@@ -259,6 +270,46 @@ function love.update(dt)
         end
     else
         keyHeld.r = false
+    end
+
+    if love.keyboard.isDown("z") then
+        cameraOffsetX = 0
+        cameraOffsetY = 0
+        zoomFactor = 1
+    end
+
+    if love.keyboard.isDown("right") then
+        cameraOffsetX = cameraOffsetX - cameraSpeed * dt
+    end
+    if love.keyboard.isDown("left") then
+        cameraOffsetX = cameraOffsetX + cameraSpeed * dt
+    end
+    if love.keyboard.isDown("down") then
+        cameraOffsetY = cameraOffsetY - cameraSpeed * dt
+    end
+    if love.keyboard.isDown("up") then
+        cameraOffsetY = cameraOffsetY + cameraSpeed * dt
+    end
+    if love.keyboard.isDown("-") then
+        zoomFactor = zoomFactor - zoomSpeed * dt
+        if zoomFactor < 0.1 then
+            zoomFactor = 0.1
+        end
+    end
+    if love.keyboard.isDown("=") then
+        zoomFactor = zoomFactor + zoomSpeed * dt
+    end
+    -- If scroll up or down, zoom in or out
+end
+
+love.wheelmoved = function(x, y)
+    if y > 0 then
+        zoomFactor = zoomFactor + (zoomSpeed - 0.2)
+    elseif y < 0 then
+        zoomFactor = zoomFactor - (zoomSpeed - 0.2)
+        if zoomFactor < 0.1 then
+            zoomFactor = 0.1
+        end
     end
 end
 
@@ -274,13 +325,15 @@ hoverpvShake = {
     time = 0
 }
 
+lastOne = -1
+
 function love.draw()
     todraw = instructions
 
-    if debugmode and not todraw[5] then
+    if debugmode and not todraw[9] then
         table.insert(todraw, "Debug mode enabled.\nPress 'R' to reload the game.")
-    elseif not debugmode and todraw[5] then
-        table.remove(todraw, 5)
+    elseif not debugmode and todraw[9] then
+        table.remove(todraw, 9)
     end
 
     instructionsM.draw(todraw)
@@ -292,10 +345,11 @@ function love.draw()
     -- Draw the grid screen height by screen height in the center of the screen
     local screen_width = love.graphics.getWidth()
     local screen_height = love.graphics.getHeight()
-    local grid_size = screen_height
+    local grid_size = screen_height * zoomFactor
     local cell_size = grid_size / grid.width
-    local grid_x = (screen_width - grid_size) / 2
-    local grid_y = (screen_height - grid_size) / 2
+    -- Adjust the drawing positions to account for the camera offset
+    local grid_x = (screen_width - grid_size) / 2 + cameraOffsetX
+    local grid_y = (screen_height - grid_size) / 2 + cameraOffsetY
 
     for i = 1, grid.width do
         for j = 1, grid.height do
@@ -378,7 +432,7 @@ function love.draw()
     end
 
     -- Find the tilehv over 100, minus 100 to get the original tilehv
-    local tilehv = tileMappings[0]
+    local tilehv = tileMappings[-1]
     local tileno = -1
     for i = 1, grid.width do
         for j = 1, grid.height do
@@ -389,8 +443,8 @@ function love.draw()
         end
     end
     if tileno == -1 then
-        tilehv = tileMappings[-1]
-        tileno = -1
+        tilehv = tileMappings[lastOne]
+        tileno = lastOne
     end
     local scale_x = hoverpv_size / tilehv:getWidth()
     local scale_y = hoverpv_size / tilehv:getHeight()
@@ -403,6 +457,7 @@ function love.draw()
     local tilehvName = tileNames[tileno] or tostring(tileno)
     love.graphics.print(tilehvName, hoverpv_x + tilehv_width + 10,
         hoverpv_y + tilehv_height / 2 - love.graphics.getFont():getHeight() / 2)
+    lastOne = tileno
     if debugmode then
         -- show shake time in middle of icon
         text_x = hoverpv_x + tilehv_width / 2 -
@@ -432,12 +487,15 @@ function love.draw()
             i = i + 1
             love.graphics.setColor(1, 1, 1)
             -- love.graphics.setNewFont("assets/Minecraft.ttf", 15)
-            love.graphics.draw(game.tileMap[item] or game.tileMap[0], screen_width / 4 + 10,
+            love.graphics.draw(game.tileMap[item] or game.tileMap[-1], screen_width / 4 + 10,
                 screen_height / 4 + 10 + i * 20)
             love.graphics.setColor(0, 0, 0)
             love.graphics.print(item .. ": " .. count, screen_width / 4 + 40, screen_height / 4 + 10 + i * 20)
             love.graphics.setFont(love.graphics.newFont(12))
         end
         love.graphics.print("Crafting Menu", screen_width / 4 + 10, screen_height / 2 + 10)
+        love.graphics.setColor(0.7, 0, 0)
+        love.graphics.print("In Development", screen_width / 4 + 10, screen_height / 2 + 30)
+        love.graphics.setColor(1, 1, 1)
     end
 end
