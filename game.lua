@@ -15,8 +15,8 @@ function game.openCraftingMenu(text, cmOpen)
 end
 
 game.grid = {}
-game.grid.width = 25
-game.grid.height = 25
+game.grid.width = 30
+game.grid.height = 30
 
 game.tileList = {0, 1, 2, 3, 4, 5, 6}
 game.tileMap = {
@@ -74,7 +74,7 @@ game.invMap = {
 game.cmOpen = false
 
 game.randomSize = 10000
-game.continentality = 40
+game.continentality = 30
 -- game.seed = 12345
 game.weight = {
     dirt = 0.5,

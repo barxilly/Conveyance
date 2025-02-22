@@ -331,7 +331,7 @@ function love.draw()
     todraw = instructions
 
     if debugmode and not todraw[9] then
-        table.insert(todraw, "Debug mode enabled.\nPress 'R' to reload the game.")
+        table.insert(todraw, "Debug mode enabled.\nPress 'R' to reload the game's grid.")
     elseif not debugmode and todraw[9] then
         table.remove(todraw, 9)
     end
@@ -443,8 +443,8 @@ function love.draw()
         end
     end
     if tileno == -1 then
-        tilehv = tileMappings[lastOne]
-        tileno = lastOne
+        tilehv = tileMappings[lastOne] or game.tileMap[-1]
+        tileno = lastOne or -1
     end
     local scale_x = hoverpv_size / tilehv:getWidth()
     local scale_y = hoverpv_size / tilehv:getHeight()
