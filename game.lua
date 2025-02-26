@@ -4,7 +4,7 @@ require "images"
 game = {}
 
 --- Game version
-game.version = "0.1.4-proto"
+game.version = "0.1.5-proto"
 
 --- Whether to show the FPS counter
 game.showFPS = true
@@ -21,7 +21,7 @@ end
 --- Load Grid
 game.grid = {}
 game.grid.width = 20
-game.grid.height = 20
+game.grid.height = 15
 
 --- Load the list of available tiles
 game.tileList = {0, 1, 2, 3, 4, 5, 6}
@@ -81,6 +81,7 @@ game.tiles = {
         name = "Quarry",
         image = quarryimage,
         func = function(globalclock, grid, storage)
+            print("Grid is " .. grid.width .. "x" .. grid.height)
             if globalclock % love.math.random(7, 10) < 0.1 then
                 for i = 1, grid.width do
                     for j = 1, grid.height do
@@ -148,6 +149,4 @@ game.weight = {
 game.mobile = false
 if love.system.getOS() == 'iOS' or love.system.getOS() == 'Android' or game.mobile then
     game.mobile = true
-    game.grid.width = 15
-    game.grid.height = 15
 end

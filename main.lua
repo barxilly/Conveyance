@@ -2,6 +2,7 @@ require "instructionsM"
 require "game"
 require "images"
 require "debug"
+reloads = 0
 
 -- LOAD
 
@@ -14,13 +15,19 @@ end
 function loadRandomness()
     seed = game.seed or (os.time() + love.math.random())
     love.math.setRandomSeed(seed)
+    if reloads > 5 then
+        seed = 101
+        love.math.setRandomSeed(seed)
+    end
 end
 
 function loadGrid()
-    grid = game.grid
-    for i = 1, grid.width do
+    grid = {}
+    grid.width = game.grid.width
+    grid.height = game.grid.height
+    for i = 1, game.grid.width do
         grid[i] = {}
-        for j = 1, grid.height do
+        for j = 1, game.grid.height do
             grid[i][j] = 0
         end
     end
@@ -28,8 +35,8 @@ function loadGrid()
     loadedTileInd = 1
     local offsetX = love.math.random() * game.randomSize
     local offsetY = love.math.random() * game.randomSize
-    for i = 1, grid.width do
-        for j = 1, grid.height do
+    for i = 1, game.grid.width do
+        for j = 1, game.grid.height do
             local noiseValue = love.math.noise(i / game.continentality + offsetX, j / game.continentality + offsetY)
             if noiseValue > game.weight.dirt then
                 grid[i][j] = 1 -- Dirt
@@ -42,8 +49,8 @@ function loadGrid()
     end
     local offsetX = love.math.random() * 1000
     local offsetY = love.math.random() * 1000
-    for i = 1, grid.width do
-        for j = 1, grid.height do
+    for i = 1, game.grid.width do
+        for j = 1, game.grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
             if noiseValue > game.weight.stone and grid[i][j] == 1 then
                 grid[i][j] = 3 -- Stone
@@ -52,8 +59,8 @@ function loadGrid()
     end
     local offsetX = love.math.random() * 1000
     local offsetY = love.math.random() * 1000
-    for i = 1, grid.width do
-        for j = 1, grid.height do
+    for i = 1, game.grid.width do
+        for j = 1, game.grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
             if noiseValue > game.weight.tree and grid[i][j] == 1 then
                 grid[i][j] = 4 -- Tree
@@ -61,20 +68,21 @@ function loadGrid()
         end
     end
     local waterCount = 0
-    for i = 1, grid.width do
-        for j = 1, grid.height do
+    for i = 1, game.grid.width do
+        for j = 1, game.grid.height do
             if grid[i][j] == 0 then
                 waterCount = waterCount + 1
             end
         end
     end
-    if waterCount > grid.width * grid.height * 0.6 then
+    if waterCount > game.grid.width * game.grid.height * 0.8 then
         print("Reloading due to too much water")
+        reloads = reloads + 1
         love.load()
     end
     local landTiles = {}
-    for i = 1, grid.width do
-        for j = 1, grid.height do
+    for i = 1, game.grid.width do
+        for j = 1, game.grid.height do
             if grid[i][j] ~= 0 then
                 table.insert(landTiles, {i, j})
             end
@@ -83,8 +91,8 @@ function loadGrid()
     local storageTile = landTiles[love.math.random(1, #landTiles)]
     grid[storageTile[1]][storageTile[2]] = 6
     local storageCount = 0
-    for i = 1, grid.width do
-        for j = 1, grid.height do
+    for i = 1, game.grid.width do
+        for j = 1, game.grid.height do
             if grid[i][j] == 6 then
                 storageCount = storageCount + 1
             end
@@ -92,6 +100,22 @@ function loadGrid()
     end
     if storageCount > 1 then
         print("Reloading due to too many storage tiles")
+        reloads = reloads + 1
+        love.load()
+    end
+
+    -- Must have at least 3 distinct tile types in the grid
+    local tileTypes = {}
+    for i = 1, game.grid.width do
+        for j = 1, game.grid.height do
+            if not tileTypes[grid[i][j]] then
+                tileTypes[grid[i][j]] = true
+            end
+        end
+    end
+    if #tileTypes < 3 then
+        print("Reloading due to too few tile types")
+        reloads = reloads + 1
         love.load()
     end
 end
@@ -136,6 +160,7 @@ function initVars()
 end
 
 function love.load()
+    initVars()
     mobileActions()
     love.graphics.setDefaultFilter("nearest", "nearest")
     for _, image in pairs(game.tileMap) do
@@ -146,7 +171,6 @@ function love.load()
     loadRandomness()
     loadGrid()
     loadInputVars()
-    initVars()
 end
 
 -- UPDATE
@@ -207,16 +231,17 @@ end
 function mousePress()
     local screen_width = love.graphics.getWidth()
     local screen_height = love.graphics.getHeight()
-    local grid_size = screen_height * zoomFactor
-    local cell_size = grid_size / grid.width
-    local grid_x = (screen_width - grid_size) / 2 + cameraOffsetX
-    local grid_y = (screen_height - grid_size) / 2 + cameraOffsetY
+    local cell_size = screen_height * zoomFactor / game.grid.height
+    local grid_width = cell_size * game.grid.width
+    local grid_height = screen_height * zoomFactor
+    local grid_x = (screen_width - grid_width) / 2 + cameraOffsetX
+    local grid_y = cameraOffsetY
     local mouse_x, mouse_y = love.mouse.getPosition()
     local i = math.floor((mouse_x - grid_x) / cell_size) + 1
     local j = math.floor((mouse_y - grid_y) / cell_size) + 1
     if love.mouse.isDown(1) and not game.cmOpen then
         if not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j) then
-            if i >= 1 and i <= grid.width and j >= 1 and j <= grid.height then
+            if i >= 1 and i <= game.grid.width and j >= 1 and j <= game.grid.height then
                 if grid[i][j] > 100 then
                     grid[i][j] = grid[i][j] - 100
                 end
@@ -264,7 +289,7 @@ function mousePress()
         mouseHeld = true
     else
         if (not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j)) and not game.cmOpen then
-            if i >= 1 and i <= grid.width and j >= 1 and j <= grid.height then
+            if i >= 1 and i <= game.grid.width and j >= 1 and j <= game.grid.height then
                 if grid[i][j] < 100 then
                     grid[i][j] = grid[i][j] + 100
                 end
@@ -393,12 +418,13 @@ end
 function drawGrid()
     screen_width = love.graphics.getWidth()
     screen_height = love.graphics.getHeight()
-    grid_size = screen_height * zoomFactor
-    cell_size = grid_size / grid.width
-    grid_x = (screen_width - grid_size) / 2 + cameraOffsetX
-    grid_y = (screen_height - grid_size) / 2 + cameraOffsetY
-    for i = 1, grid.width do
-        for j = 1, grid.height do
+    local cell_size = screen_height * zoomFactor / game.grid.height
+    local grid_width = cell_size * game.grid.width
+    local grid_height = screen_height * zoomFactor
+    local grid_x = (screen_width - grid_width) / 2 + cameraOffsetX
+    local grid_y = cameraOffsetY
+    for i = 1, game.grid.width do
+        for j = 1, game.grid.height do
             local tile = grid[i][j]
             local texture = tileMappings[tile] or waterimage
             if tile >= 100 then
