@@ -20,7 +20,7 @@ fi
 
 ## Love File
 echo "Building .love file"
-zip -r Build/Conveyance.love . -x ".*" -x "*/.*" -x "Build/*" -x "build.sh" -x "README.md" -x "LICENSE"
+zip -q -r Build/Conveyance.love . -x ".*" -x "*/.*" -x "Build/*" -x "build.sh" -x "README.md" -x "LICENSE"
 echo ".love created"
 sleep 1
 
@@ -28,7 +28,7 @@ sleep 1
 echo "Building Windows"
 cat Build/love.exe Build/Conveyance.love > Build/Conveyance-$version.exe
 echo ".exe created, zipping with DLLs"
-zip -r Build/Conveyance-$version-Windows-x64.zip Build/Conveyance-$version.exe Build/*.dll
+zip -q -r Build/Conveyance-$version-Windows-x64.zip Build/Conveyance-$version.exe Build/*.dll
 echo "Built Windows"
 sleep 1
 
@@ -46,7 +46,7 @@ sleep 1
 ## MacOS
 echo "Building MacOS"
 cp Build/Conveyance.love Build/Conveyance.app/Contents/Resources/
-zip -r Build/Conveyance-$version-MacOS.zip Build/Conveyance.app
+zip -q -r Build/Conveyance-$version-MacOS.zip Build/Conveyance.app
 echo "Built MacOS"
 sleep 1
 
