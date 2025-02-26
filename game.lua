@@ -20,8 +20,8 @@ end
 
 --- Load Grid
 game.grid = {}
-game.grid.width = 30
-game.grid.height = 30
+game.grid.width = 20
+game.grid.height = 20
 
 --- Load the list of available tiles
 game.tileList = {0, 1, 2, 3, 4, 5, 6}
@@ -146,9 +146,8 @@ game.weight = {
 }
 
 game.mobile = false
-if love.system.getOS() == 'iOS' or love.system.getOS() == 'Android' then
+if love.system.getOS() == 'iOS' or love.system.getOS() == 'Android' or game.mobile then
     game.mobile = true
-    game.grid.width = 25
+    game.grid.width = 15
     game.grid.height = 15
-
 end

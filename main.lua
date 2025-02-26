@@ -2,28 +2,21 @@ require "instructionsM"
 require "game"
 require "images"
 require "debug"
-instructionsM.test()
-game.test()
 
-function love.load()
+-- LOAD
+
+function mobileActions()
     if game.mobile then
         love.graphics.setFont(love.graphics.newFont(11))
     end
+end
 
-    love.graphics.setDefaultFilter("nearest", "nearest")
+function loadRandomness()
+    seed = game.seed or (os.time() + love.math.random())
+    love.math.setRandomSeed(seed)
+end
 
-    for _, image in pairs(game.tileMap) do
-        image:setFilter("nearest", "nearest")
-    end
-
-    -- Load instructions and default storage
-    instructions = instructionsM.default
-    storage = game.startStorage
-
-    -- Set Love2D Ransom Seed
-    love.math.setRandomSeed(game.seed or (os.time() + love.math.random()))
-
-    -- Set up grid
+function loadGrid()
     grid = game.grid
     for i = 1, grid.width do
         grid[i] = {}
@@ -31,27 +24,10 @@ function love.load()
             grid[i][j] = 0
         end
     end
-
-    -- Load Tiles
     availableTiles = game.tileList
     loadedTileInd = 1
-
-    -- Set up mouse and key variables for input handling
-    mouseHeld = false
-    keyHeld = {
-        escape = false,
-        d = false,
-        c = false,
-        r = false,
-        q = false
-    }
-    currentCellMouseHeld = {0, 0}
-    currentCellMouseHover = {0, 0}
-
-    -- Use perlin noise to generate a random grid
     local offsetX = love.math.random() * game.randomSize
     local offsetY = love.math.random() * game.randomSize
-    -- Adjust this value to zoom in or out on the noise
     for i = 1, grid.width do
         for j = 1, grid.height do
             local noiseValue = love.math.noise(i / game.continentality + offsetX, j / game.continentality + offsetY)
@@ -64,7 +40,6 @@ function love.load()
             end
         end
     end
-
     local offsetX = love.math.random() * 1000
     local offsetY = love.math.random() * 1000
     for i = 1, grid.width do
@@ -75,7 +50,6 @@ function love.load()
             end
         end
     end
-
     local offsetX = love.math.random() * 1000
     local offsetY = love.math.random() * 1000
     for i = 1, grid.width do
@@ -86,8 +60,6 @@ function love.load()
             end
         end
     end
-
-    -- If more than 60% of tiles are water, reload 
     local waterCount = 0
     for i = 1, grid.width do
         for j = 1, grid.height do
@@ -100,8 +72,6 @@ function love.load()
         print("Reloading due to too much water")
         love.load()
     end
-
-    -- Pick a random land tile to place a storage tile in [6]
     local landTiles = {}
     for i = 1, grid.width do
         for j = 1, grid.height do
@@ -112,8 +82,6 @@ function love.load()
     end
     local storageTile = landTiles[love.math.random(1, #landTiles)]
     grid[storageTile[1]][storageTile[2]] = 6
-
-    -- If there's more than one storage tile, reload
     local storageCount = 0
     for i = 1, grid.width do
         for j = 1, grid.height do
@@ -128,17 +96,60 @@ function love.load()
     end
 end
 
-initial = {}
-tile = 0
-clock = 0
-prev = false
-globalclock = 0
-laststone = 0
-cameraOffsetX = 0
-cameraOffsetY = 0
-cameraSpeed = 200
-zoomFactor = 1
-zoomSpeed = 0.3
+function loadInputVars()
+    mouseHeld = false
+    keyHeld = {
+        escape = false,
+        d = false,
+        c = false,
+        r = false,
+        q = false
+    }
+    currentCellMouseHeld = {0, 0}
+    currentCellMouseHover = {0, 0}
+end
+
+function initVars()
+    initial = {}
+    tile = 0
+    clock = 0
+    prev = false
+    globalclock = 0
+    laststone = 0
+    cameraOffsetX = 0
+    cameraOffsetY = 0
+    cameraSpeed = 200
+    zoomFactor = 1
+    zoomSpeed = 0.3
+    lasttouches = {}
+    previewShake = {
+        duration = 0.5,
+        intensity = 5,
+        time = 0
+    }
+    hoverpvShake = {
+        duration = 0.5,
+        intensity = 5,
+        time = 0
+    }
+    lastOne = -1
+end
+
+function love.load()
+    mobileActions()
+    love.graphics.setDefaultFilter("nearest", "nearest")
+    for _, image in pairs(game.tileMap) do
+        image:setFilter("nearest", "nearest")
+    end
+    instructions = instructionsM.default
+    storage = game.startStorage
+    loadRandomness()
+    loadGrid()
+    loadInputVars()
+    initVars()
+end
+
+-- UPDATE
 
 function selectNextTile()
     loadedTileInd = loadedTileInd + 1
@@ -150,9 +161,7 @@ function selectNextTile()
     prev = true
 end
 
-lasttouches = {}
-function love.update(dt)
-    -- Calculate touches, if the touches are pinching in, zoom in, if pinching out, zoom out
+function touchZoom()
     touches = love.touch.getTouches()
     if #touches == 2 then
         local touch1 = touches[1]
@@ -180,8 +189,9 @@ function love.update(dt)
             end
         end
     end
+end
 
-    -- Update the shake effect
+function timers(dt)
     if previewShake.time > 0 then
         previewShake.time = previewShake.time - dt
     elseif previewShake.time < 0 then
@@ -192,15 +202,9 @@ function love.update(dt)
     elseif hoverpvShake.time < 0 then
         hoverpvShake.time = 0
     end
+end
 
-    globalclock = globalclock + dt
-    for item = 0, #game.tiles do
-        if game.tiles[item].func then
-            game.tiles[item].func(globalclock, grid, storage)
-        end
-    end
-
-    -- Adjust mouse coordinates based on camera offset and zoom factor
+function mousePress()
     local screen_width = love.graphics.getWidth()
     local screen_height = love.graphics.getHeight()
     local grid_size = screen_height * zoomFactor
@@ -210,8 +214,6 @@ function love.update(dt)
     local mouse_x, mouse_y = love.mouse.getPosition()
     local i = math.floor((mouse_x - grid_x) / cell_size) + 1
     local j = math.floor((mouse_y - grid_y) / cell_size) + 1
-
-    -- If the mouse is pressed, change the value of the cell under the mouse and invert colors
     if love.mouse.isDown(1) and not game.cmOpen then
         if not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j) then
             if i >= 1 and i <= grid.width and j >= 1 and j <= grid.height then
@@ -221,9 +223,10 @@ function love.update(dt)
                 if loadedTileInd == 5 and not (grid[i][j] == 3 or grid[i][j] == 103) then
                     hoverpvShake.time = 0.5
                 elseif storage[game.invMap[loadedTileInd]] > 0 then
+                    print(grid[i][j])
                     if loadedTileInd == grid[i][j] then
                         previewShake.time = 0.5
-                    elseif game.tiles[grid[i][j]].immutable then
+                    elseif (game.tiles[grid[i][j]] or game.tiles[grid[i][j] - 100]).immutable or false then
                         hoverpvShake.time = 0.5
                     else
                         grid[i][j] = loadedTileInd
@@ -270,7 +273,9 @@ function love.update(dt)
         end
         mouseHeld = false
     end
+end
 
+function mouseHoverGrid()
     for i = 1, grid.width do
         for j = 1, grid.height do
             if grid[i][j] >= 100 and not (currentCellMouseHover[1] == i and currentCellMouseHover[2] == j) then
@@ -278,8 +283,9 @@ function love.update(dt)
             end
         end
     end
+end
 
-    -- If Esc is pressed, exit the game
+function keyPress()
     if love.keyboard.isDown("escape") then
         if not keyHeld.escape then
             love.event.quit()
@@ -288,7 +294,6 @@ function love.update(dt)
     else
         keyHeld.escape = false
     end
-
     if love.keyboard.isDown("d") then
         if not keyHeld.d then
             debugmode = not debugmode
@@ -300,7 +305,6 @@ function love.update(dt)
     else
         keyHeld.d = false
     end
-
     if love.keyboard.isDown("c") then
         if not keyHeld.c then
             game.openCraftingMenu()
@@ -310,7 +314,6 @@ function love.update(dt)
     else
         keyHeld.c = false
     end
-
     if love.keyboard.isDown("r") then
         if not keyHeld.r and debugmode then
             love.load()
@@ -319,13 +322,11 @@ function love.update(dt)
     else
         keyHeld.r = false
     end
-
     if love.keyboard.isDown("z") then
         cameraOffsetX = 0
         cameraOffsetY = 0
         zoomFactor = 1
     end
-
     if love.keyboard.isDown("right") then
         cameraOffsetX = cameraOffsetX - cameraSpeed * dt
     end
@@ -347,7 +348,20 @@ function love.update(dt)
     if love.keyboard.isDown("=") then
         zoomFactor = zoomFactor + zoomSpeed * dt
     end
-    -- If scroll up or down, zoom in or out
+end
+
+function love.update(dt)
+    touchZoom()
+    timers(dt)
+    globalclock = globalclock + dt
+    for item = 0, #game.tiles do
+        if game.tiles[item].func then
+            game.tiles[item].func(globalclock, grid, storage)
+        end
+    end
+    mousePress()
+    mouseHoverGrid()
+    keyPress()
 end
 
 love.wheelmoved = function(x, y)
@@ -361,21 +375,9 @@ love.wheelmoved = function(x, y)
     end
 end
 
-previewShake = {
-    duration = 0.5,
-    intensity = 5,
-    time = 0
-}
+-- DRAW
 
-hoverpvShake = {
-    duration = 0.5,
-    intensity = 5,
-    time = 0
-}
-
-lastOne = -1
-
-function love.draw()
+function textDraw()
     todraw = instructions
 
     if debugmode and not todraw[9] then
@@ -386,19 +388,15 @@ function love.draw()
 
     instructionsM.draw(todraw)
     instructionsM.drawStorage(storage)
+end
 
-    tileMappings = game.tileMap
-    tileNames = game.invMap
-
-    -- Draw the grid screen height by screen height in the center of the screen
-    local screen_width = love.graphics.getWidth()
-    local screen_height = love.graphics.getHeight()
-    local grid_size = screen_height * zoomFactor
-    local cell_size = grid_size / grid.width
-    -- Adjust the drawing positions to account for the camera offset
-    local grid_x = (screen_width - grid_size) / 2 + cameraOffsetX
-    local grid_y = (screen_height - grid_size) / 2 + cameraOffsetY
-
+function drawGrid()
+    screen_width = love.graphics.getWidth()
+    screen_height = love.graphics.getHeight()
+    grid_size = screen_height * zoomFactor
+    cell_size = grid_size / grid.width
+    grid_x = (screen_width - grid_size) / 2 + cameraOffsetX
+    grid_y = (screen_height - grid_size) / 2 + cameraOffsetY
     for i = 1, grid.width do
         for j = 1, grid.height do
             local tile = grid[i][j]
@@ -409,33 +407,25 @@ function love.draw()
             texture = tileMappings[tile % 100] or waterimage
             love.graphics.draw(texture, grid_x + (i - 1) * cell_size, grid_y + (j - 1) * cell_size, 0,
                 cell_size / texture:getWidth(), cell_size / texture:getHeight())
-
-            -- Reset color to white before drawing the image
             love.graphics.setColor(1, 1, 1)
-
-            -- Get the width and height of the text
             local text = tostring(tile)
             local text_width = love.graphics.getFont():getWidth(text)
             local text_height = love.graphics.getFont():getHeight(text)
-
-            -- Calculate the position to center the text
             local text_x = grid_x + (i - 1) * cell_size + (cell_size - text_width) / 2
             local text_y = grid_y + (j - 1) * cell_size + (cell_size - text_height) / 2
-
             if debugmode then
                 love.graphics.setColor(0.6, 0, 0)
                 love.graphics.print(text, text_x, text_y)
-                -- Reset color to white after drawing the text
                 love.graphics.setColor(1, 1, 1)
             end
         end
     end
+end
 
+function drawPreview()
     local preview_size = 40
     local preview_x = screen_width - preview_size - 65
     local preview_y = screen_height - preview_size - 25
-
-    -- Apply shake effect if active
     if previewShake.time > 0 then
         local shake_offset_x = love.math.random(-previewShake.intensity, previewShake.intensity)
         local shake_offset_y = love.math.random(-previewShake.intensity, previewShake.intensity)
@@ -443,7 +433,6 @@ function love.draw()
         preview_y = preview_y + shake_offset_y
         love.graphics.setColor(1, 0.3, 0.3)
     end
-
     local tile = tileMappings[loadedTileInd]
     local scale_x = preview_size / tile:getWidth()
     local scale_y = preview_size / tile:getHeight()
@@ -457,7 +446,6 @@ function love.draw()
     love.graphics.print(tileName, preview_x + tile_width + 10,
         preview_y + tile_height / 2 - love.graphics.getFont():getHeight() / 2)
     if debugmode then
-        -- show shake time in middle of icon
         text_x =
             preview_x + tile_width / 2 - love.graphics.getFont():getWidth(string.format("%.1f", previewShake.time)) / 2
         text_y = preview_y + tile_height / 2 - love.graphics.getFont():getHeight() / 2
@@ -465,12 +453,12 @@ function love.draw()
         love.graphics.print(string.format("%.1f", previewShake.time), text_x, text_y)
     end
     love.graphics.setColor(1, 1, 1)
-    -- Draw the hover preview
+end
+
+function drawHoverTile()
     local hoverpv_size = 20
     local hoverpv_x = screen_width - hoverpv_size - 65
     local hoverpv_y = screen_height - hoverpv_size - 65
-
-    -- Apply shake effect if active
     if hoverpvShake.time > 0 then
         local shake_offset_x = love.math.random(-hoverpvShake.intensity, hoverpvShake.intensity)
         local shake_offset_y = love.math.random(-hoverpvShake.intensity, hoverpvShake.intensity)
@@ -478,8 +466,6 @@ function love.draw()
         hoverpv_y = hoverpv_y + shake_offset_y
         love.graphics.setColor(1, 0.3, 0.3)
     end
-
-    -- Find the tilehv over 100, minus 100 to get the original tilehv
     local tilehv = tileMappings[-1]
     local tileno = -1
     for i = 1, grid.width do
@@ -507,21 +493,22 @@ function love.draw()
         hoverpv_y + tilehv_height / 2 - love.graphics.getFont():getHeight() / 2)
     lastOne = tileno
     if debugmode then
-        -- show shake time in middle of icon
         text_x = hoverpv_x + tilehv_width / 2 -
                      love.graphics.getFont():getWidth(string.format("%.1f", hoverpvShake.time)) / 2
         text_y = hoverpv_y + tilehv_height / 2 - love.graphics.getFont():getHeight() / 2
         love.graphics.setColor(1, 0, 0)
         love.graphics.print(string.format("%.1f", hoverpvShake.time), text_x, text_y)
     end
+end
 
-    love.graphics.setColor(1, 1, 1)
-
+function drawFPS()
     if game.showFPS then
         local fps = love.timer.getFPS()
         love.graphics.print("FPS: " .. fps, screen_width - 70, 10)
     end
+end
 
+function drawCraftingMenu()
     if game.cmOpen then
         love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
         love.graphics.rectangle("fill", 0, 0, screen_width, screen_height)
@@ -546,4 +533,17 @@ function love.draw()
         love.graphics.print("In Development", screen_width / 4 + 10, screen_height / 2 + 30)
         love.graphics.setColor(1, 1, 1)
     end
+end
+
+function love.draw()
+    textDraw()
+    tileMappings = game.tileMap
+    tileNames = game.invMap
+    drawGrid()
+    drawPreview()
+    love.graphics.setColor(1, 1, 1)
+    drawHoverTile()
+    love.graphics.setColor(1, 1, 1)
+    drawFPS()
+    drawCraftingMenu()
 end
