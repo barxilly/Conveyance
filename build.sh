@@ -1,6 +1,6 @@
 # Get version number
 version=$(grep -oP 'game.version = "\K[^"]+' game.lua)
-echo "Building Conveyance v$version"
+echo -e "\033[1mBuilding Conveyance v$version\033[0m"
 echo "Checking whether version should be updated"
 
 # If files with $version already exist, update version number
@@ -19,13 +19,13 @@ if [ -f Build/Archive/$version/Conveyance-$version.exe ]; then
 fi
 
 ## Love File
-echo "Building .love file"
+echo -e "\033[1mBuilding .love file\033[0m"
 zip -q -r Build/Conveyance.love . -x ".*" -x "*/.*" -x "Build/*" -x "build.sh" -x "README.md" -x "LICENSE"
 echo ".love created"
 sleep 1
 
 ## Windows
-echo "Building Windows"
+echo -e "\033[1mBuilding Windows\033[0m"
 cat Build/love.exe Build/Conveyance.love > Build/Conveyance-$version.exe
 echo ".exe created, zipping with DLLs"
 zip -q -r Build/Conveyance-$version-Windows-x64.zip Build/Conveyance-$version.exe Build/*.dll
@@ -33,7 +33,7 @@ echo "Built Windows"
 sleep 1
 
 ## Linux
-echo "Building Linux"
+echo -e "\033[1mBuilding Linux\033[0m"
 cat Build/love Build/Conveyance.love > Build/squashfs-root/bin/Conveyance
 cat Build/love Build/Conveyance.love > Build/Conveyance-$version
 echo "Making AppImage"
@@ -44,14 +44,14 @@ echo "Built Linux"
 sleep 1
 
 ## MacOS
-echo "Building MacOS"
+echo -e "\033[1mBuilding MacOS\033[0m"
 cp Build/Conveyance.love Build/Conveyance.app/Contents/Resources/
 zip -q -r Build/Conveyance-$version-MacOS.zip Build/Conveyance.app
 echo "Built MacOS"
 sleep 1
 
 ## Android
-echo "Building Android"
+echo -e "\033[1mBuilding Android\033[0m"
 cp Build/Conveyance.love Build/love-android/app/src/embed/assets/game.love
 cd Build/love-android
 python3 -c "import re; f = open('gradle.properties', 'r'); contents = f.read(); f.close(); contents = re.sub(r'app.version_name=(.*)', 'app.version_name=$version', contents); f = open('gradle.properties', 'w'); f.write(contents); f.close()"
