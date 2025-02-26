@@ -6,6 +6,10 @@ instructionsM.test()
 game.test()
 
 function love.load()
+    if game.mobile then
+        love.graphics.setFont(love.graphics.newFont(11))
+    end
+
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     for _, image in pairs(game.tileMap) do
@@ -146,7 +150,37 @@ function selectNextTile()
     prev = true
 end
 
+lasttouches = {}
 function love.update(dt)
+    -- Calculate touches, if the touches are pinching in, zoom in, if pinching out, zoom out
+    touches = love.touch.getTouches()
+    if #touches == 2 then
+        local touch1 = touches[1]
+        local touch2 = touches[2]
+        local x1, y1 = love.touch.getPosition(touch1)
+        local x2, y2 = love.touch.getPosition(touch2)
+        local lasttouch1 = lasttouches[1]
+        local lasttouch2 = lasttouches[2]
+        local lx1, ly1 = lasttouch1 and love.touch.getPosition(lasttouch1) or x1,
+            lasttouch1 and love.touch.getPosition(lasttouch1) or y1
+        local lx2, ly2 = lasttouch2 and love.touch.getPosition(lasttouch2) or x2,
+            lasttouch2 and love.touch.getPosition(lasttouch2) or y2
+        local dx = x1 - x2
+        local dy = y1 - y2
+        local ldx = lx1 - lx2
+        local ldy = ly1 - ly2
+        local dist = math.sqrt(dx * dx + dy * dy)
+        local ldist = math.sqrt(ldx * ldx + ldy * ldy)
+        if ldist > dist then
+            zoomFactor = zoomFactor + zoomSpeed * dt
+        elseif ldist < dist then
+            zoomFactor = zoomFactor - zoomSpeed * dt
+            if zoomFactor < 0.1 then
+                zoomFactor = 0.1
+            end
+        end
+    end
+
     -- Update the shake effect
     if previewShake.time > 0 then
         previewShake.time = previewShake.time - dt
@@ -205,6 +239,24 @@ function love.update(dt)
             end
             currentCellMouseHeld = {i, j}
         end
+
+        -- Get area of preview tile
+        local preview_size = 40
+        local preview_x = screen_width - preview_size - 65
+        local preview_y = screen_height - preview_size - 25
+        local preview_tile_x = preview_x
+        local preview_tile_y = preview_y
+        local preview_tile_size = 40
+        local preview_tile_i = math.floor((mouse_x - preview_tile_x) / preview_tile_size) + 1
+        local preview_tile_j = math.floor((mouse_y - preview_tile_y) / preview_tile_size) + 1
+
+        -- If the mouse is pressed on the preview tile, change the value of the preview tile
+        if preview_tile_i == 1 and preview_tile_j == 1 then
+            if not mouseHeld then
+                selectNextTile()
+            end
+        end
+
         mouseHeld = true
     elseif (love.mouse.isDown(2) or (love.keyboard.isDown("q") and not keyHeld.q)) and not game.cmOpen then
         if not mouseHeld then
