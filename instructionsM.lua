@@ -25,7 +25,9 @@ function instructionsM.drawStorage(storage)
     love.graphics.print("Storage", 10, 230)
     local y = 250
     for item, count in pairs(storage) do
-        love.graphics.print(item .. ": " .. count, 10, y)
-        y = y + 20
+        if count > 0 then
+            love.graphics.print(item .. ": " .. count, 10, y)
+            y = y + 20
+        end
     end
 end

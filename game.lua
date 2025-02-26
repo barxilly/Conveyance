@@ -4,7 +4,7 @@ require "images"
 game = {}
 
 --- Game version
-game.version = "0.1.3-proto"
+game.version = "0.1.4-proto"
 
 --- Whether to show the FPS counter
 game.showFPS = true
@@ -46,17 +46,67 @@ game.tileMap = {
     ["Error"] = errorimage
 }
 
---- Tiles that cannot be removed
-game.immutableTiles = {
-    [0] = false,
-    [1] = false,
-    [2] = false,
-    [3] = false,
-    [4] = false,
-    [5] = false,
-    [6] = true,
-    [-1] = false
+game.tiles = {
+    [0] = {
+        name = "Water",
+        image = waterimage,
+        func = nil,
+        immutable = false
+    },
+    [1] = {
+        name = "Dirt",
+        image = dirtimage,
+        func = nil,
+        immutable = false
+    },
+    [2] = {
+        name = "Sand",
+        image = sandimage,
+        func = nil,
+        immutable = false
+    },
+    [3] = {
+        name = "Stone",
+        image = stoneimage,
+        func = nil,
+        immutable = false
+    },
+    [4] = {
+        name = "Tree",
+        image = treeimage,
+        func = nil,
+        immutable = false
+    },
+    [5] = {
+        name = "Quarry",
+        image = quarryimage,
+        func = function(globalclock, grid, storage)
+            if globalclock % love.math.random(7, 10) < 0.1 then
+                for i = 1, grid.width do
+                    for j = 1, grid.height do
+                        if grid[i][j] == 5 or grid[i][j] == 105 then
+                            storage["Stone"] = storage["Stone"] + math.floor(1, 2)
+                        end
+                    end
+                end
+            end
+        end,
+        immutable = false
+    },
+    [6] = {
+        name = "Storage",
+        image = storageimage,
+        func = nil,
+        immutable = true
+    },
+    [-1] = {
+        name = "Error",
+        image = errorimage,
+        func = nil,
+        immutable = false
+    }
 }
+
 game.startStorage = {
     Water = 20,
     Dirt = 20,
@@ -98,4 +148,7 @@ game.weight = {
 game.mobile = false
 if love.system.getOS() == 'iOS' or love.system.getOS() == 'Android' then
     game.mobile = true
+    game.grid.width = 20
+    game.grid.height = 20
+
 end

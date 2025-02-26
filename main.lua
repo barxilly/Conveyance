@@ -192,15 +192,11 @@ function love.update(dt)
     elseif hoverpvShake.time < 0 then
         hoverpvShake.time = 0
     end
-    -- Every 2 seconds, add a stone to the storage for each quarry
+
     globalclock = globalclock + dt
-    if globalclock % love.math.random(7, 10) < 0.1 then
-        for i = 1, grid.width do
-            for j = 1, grid.height do
-                if grid[i][j] == 5 or grid[i][j] == 105 then
-                    storage["Stone"] = storage["Stone"] + math.floor(1, 2)
-                end
-            end
+    for item = 0, #game.tiles do
+        if game.tiles[item].func then
+            game.tiles[item].func(globalclock, grid, storage)
         end
     end
 
@@ -227,7 +223,7 @@ function love.update(dt)
                 elseif storage[game.invMap[loadedTileInd]] > 0 then
                     if loadedTileInd == grid[i][j] then
                         previewShake.time = 0.5
-                    elseif game.immutableTiles[grid[i][j]] then
+                    elseif game.tiles[grid[i][j]].immutable then
                         hoverpvShake.time = 0.5
                     else
                         grid[i][j] = loadedTileInd
