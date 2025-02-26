@@ -18,16 +18,16 @@ function screens.title.load()
     title:setFilter("nearest", "nearest")
     -- start playing bg1.waV
     bgm = {}
-    bgm[1] = love.audio.newSource("assets/bg1.wav", "stream")
-    bgm[1]:setLooping(true)
+    bgm[1] = love.audio.newSource("assets/bgm.mp3", "stream")
     bgm[1]:play()
     bgm[1]:setVolume(0.5)
+    bgm[1]:setLooping(true)
 end
 
 -- UPDATE
 
 function screens.title.update(dt)
-    if love.keyboard.isDown("return") then
+    if love.keyboard.isDown("return") or love.mouse.isDown(1) then
         screens.game.load()
         currentScreen = screens.game
     end
@@ -198,6 +198,13 @@ function initVars()
     lastOne = -1
 end
 
+function loadMusic()
+    bgm[2] = love.audio.newSource("assets/quietnoise.ogg", "stream")
+    bgm[2]:play()
+    bgm[2]:setVolume(0.3)
+    bgm[2]:setLooping(true)
+end
+
 function screens.game.load()
     initVars()
     mobileActions()
@@ -212,6 +219,7 @@ function screens.game.load()
     loadRandomness()
     loadGrid()
     loadInputVars()
+    loadMusic()
 end
 
 -- UPDATE
