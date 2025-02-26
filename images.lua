@@ -6,5 +6,6 @@ treeimage = love.graphics.newImage("assets/forest.png")
 
 quarryimage = love.graphics.newImage("assets/quarry.png")
 storageimage = love.graphics.newImage("assets/storage.png")
+conveyorimage = love.graphics.newImage("assets/conveyor.png")
 
 errorimage = love.graphics.newImage("assets/error.png")

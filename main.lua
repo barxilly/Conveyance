@@ -4,6 +4,45 @@ require "images"
 require "debug"
 reloads = 0
 
+screens = {
+    game = {},
+    title = {}
+}
+
+--- TITLE
+-- LOAD
+
+function screens.title.load()
+    love.graphics.setDefaultFilter("nearest", "nearest")
+    title = love.graphics.newImage("assets/dirt.png")
+    title:setFilter("nearest", "nearest")
+    -- start playing bg1.waV
+    bgm = {}
+    bgm[1] = love.audio.newSource("assets/bg1.wav", "stream")
+    bgm[1]:setLooping(true)
+    bgm[1]:play()
+    bgm[1]:setVolume(0.5)
+end
+
+-- UPDATE
+
+function screens.title.update(dt)
+    if love.keyboard.isDown("return") then
+        screens.game.load()
+        currentScreen = screens.game
+    end
+end
+
+function screens.title.wheel(x, y)
+end
+
+-- DRAW
+function screens.title.draw()
+    love.graphics.draw(title, 0, 0, 0, love.graphics.getWidth() / title:getWidth(),
+        love.graphics.getHeight() / title:getHeight())
+end
+
+--- GAME
 -- LOAD
 
 function mobileActions()
@@ -31,16 +70,16 @@ function loadGrid()
             grid[i][j] = 0
         end
     end
-    availableTiles = game.tileList
+    availableTiles = game.tiles
     loadedTileInd = 1
     local offsetX = love.math.random() * game.randomSize
     local offsetY = love.math.random() * game.randomSize
     for i = 1, game.grid.width do
         for j = 1, game.grid.height do
             local noiseValue = love.math.noise(i / game.continentality + offsetX, j / game.continentality + offsetY)
-            if noiseValue > game.weight.dirt then
+            if noiseValue > game.tiles[1].weight then
                 grid[i][j] = 1 -- Dirt
-            elseif noiseValue > game.weight.sand then
+            elseif noiseValue > game.tiles[2].weight then
                 grid[i][j] = 2 -- Sand
             else
                 grid[i][j] = 0 -- Water
@@ -52,7 +91,7 @@ function loadGrid()
     for i = 1, game.grid.width do
         for j = 1, game.grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
-            if noiseValue > game.weight.stone and grid[i][j] == 1 then
+            if noiseValue > game.tiles[3].weight and grid[i][j] == 1 then
                 grid[i][j] = 3 -- Stone
             end
         end
@@ -62,7 +101,7 @@ function loadGrid()
     for i = 1, game.grid.width do
         for j = 1, game.grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
-            if noiseValue > game.weight.tree and grid[i][j] == 1 then
+            if noiseValue > game.tiles[4].weight and grid[i][j] == 1 then
                 grid[i][j] = 4 -- Tree
             end
         end
@@ -75,7 +114,7 @@ function loadGrid()
             end
         end
     end
-    if waterCount > game.grid.width * game.grid.height * 0.8 then
+    if waterCount > game.grid.width * game.grid.height * game.tiles[0].weight then
         print("Reloading due to too much water")
         reloads = reloads + 1
         love.load()
@@ -159,12 +198,14 @@ function initVars()
     lastOne = -1
 end
 
-function love.load()
+function screens.game.load()
     initVars()
     mobileActions()
     love.graphics.setDefaultFilter("nearest", "nearest")
-    for _, image in pairs(game.tileMap) do
-        image:setFilter("nearest", "nearest")
+    for _, tiles in pairs(game.tiles) do
+        if tiles.image then
+            tiles.image:setFilter("nearest", "nearest")
+        end
     end
     instructions = instructionsM.default
     storage = game.startStorage
@@ -177,7 +218,7 @@ end
 
 function selectNextTile()
     loadedTileInd = loadedTileInd + 1
-    if loadedTileInd > (#availableTiles - 1) then
+    if loadedTileInd > (#availableTiles) then
         loadedTileInd = 0
     end
     tile = loadedTileInd
@@ -215,14 +256,14 @@ function touchZoom()
     end
 end
 
-function timers(dt)
+function timers()
     if previewShake.time > 0 then
-        previewShake.time = previewShake.time - dt
+        previewShake.time = previewShake.time - gdt
     elseif previewShake.time < 0 then
         previewShake.time = 0
     end
     if hoverpvShake.time > 0 then
-        hoverpvShake.time = hoverpvShake.time - dt
+        hoverpvShake.time = hoverpvShake.time - gdt
     elseif hoverpvShake.time < 0 then
         hoverpvShake.time = 0
     end
@@ -247,7 +288,7 @@ function mousePress()
                 end
                 if loadedTileInd == 5 and not (grid[i][j] == 3 or grid[i][j] == 103) then
                     hoverpvShake.time = 0.5
-                elseif storage[game.invMap[loadedTileInd]] > 0 then
+                elseif storage[game.tiles[loadedTileInd].name] > 0 then
                     print(grid[i][j])
                     if loadedTileInd == grid[i][j] then
                         previewShake.time = 0.5
@@ -255,7 +296,7 @@ function mousePress()
                         hoverpvShake.time = 0.5
                     else
                         grid[i][j] = loadedTileInd
-                        storage[game.invMap[loadedTileInd]] = storage[game.invMap[loadedTileInd]] - 1
+                        storage[game.tiles[loadedTileInd].name] = storage[game.tiles[loadedTileInd].name] - 1
                     end
                 elseif previewShake.time == 0 then
                     previewShake.time = 1.2
@@ -341,7 +382,7 @@ function keyPress()
     end
     if love.keyboard.isDown("r") then
         if not keyHeld.r and debugmode then
-            love.load()
+            screens.game.load()
             keyHeld.r = true
         end
     else
@@ -353,31 +394,32 @@ function keyPress()
         zoomFactor = 1
     end
     if love.keyboard.isDown("right") then
-        cameraOffsetX = cameraOffsetX - cameraSpeed * dt
+        cameraOffsetX = cameraOffsetX - cameraSpeed * gdt
     end
     if love.keyboard.isDown("left") then
-        cameraOffsetX = cameraOffsetX + cameraSpeed * dt
+        cameraOffsetX = cameraOffsetX + cameraSpeed * gdt
     end
     if love.keyboard.isDown("down") then
-        cameraOffsetY = cameraOffsetY - cameraSpeed * dt
+        cameraOffsetY = cameraOffsetY - cameraSpeed * gdt
     end
     if love.keyboard.isDown("up") then
-        cameraOffsetY = cameraOffsetY + cameraSpeed * dt
+        cameraOffsetY = cameraOffsetY + cameraSpeed * gdt
     end
     if love.keyboard.isDown("-") then
-        zoomFactor = zoomFactor - zoomSpeed * dt
+        zoomFactor = zoomFactor - zoomSpeed * gdt
         if zoomFactor < 0.1 then
             zoomFactor = 0.1
         end
     end
     if love.keyboard.isDown("=") then
-        zoomFactor = zoomFactor + zoomSpeed * dt
+        zoomFactor = zoomFactor + zoomSpeed * gdt
     end
 end
 
-function love.update(dt)
+function screens.game.update(dt)
+    gdt = dt
     touchZoom()
-    timers(dt)
+    timers()
     globalclock = globalclock + dt
     for item = 0, #game.tiles do
         if game.tiles[item].func then
@@ -389,7 +431,7 @@ function love.update(dt)
     keyPress()
 end
 
-love.wheelmoved = function(x, y)
+function screens.game.wheel(x, y)
     if y > 0 then
         zoomFactor = zoomFactor + (zoomSpeed - 0.2)
     elseif y < 0 then
@@ -503,7 +545,7 @@ function drawHoverTile()
         end
     end
     if tileno == -1 then
-        tilehv = tileMappings[lastOne] or game.tileMap[-1]
+        tilehv = tileMappings[lastOne] or game.tiles[-1].image
         tileno = lastOne or -1
     end
     local scale_x = hoverpv_size / tilehv:getWidth()
@@ -534,6 +576,15 @@ function drawFPS()
     end
 end
 
+function tileNameToID(name)
+    for i = 0, #game.tiles do
+        if game.tiles[i].name == name then
+            return i
+        end
+    end
+    return -1
+end
+
 function drawCraftingMenu()
     if game.cmOpen then
         love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
@@ -548,7 +599,7 @@ function drawCraftingMenu()
             i = i + 1
             love.graphics.setColor(1, 1, 1)
             -- love.graphics.setNewFont("assets/Minecraft.ttf", 15)
-            love.graphics.draw(game.tileMap[item] or game.tileMap[-1], screen_width / 4 + 10,
+            love.graphics.draw(game.tiles[tileNameToID(item)].image or game.tiles[-1].image, screen_width / 4 + 10,
                 screen_height / 4 + 10 + i * 20)
             love.graphics.setColor(0, 0, 0)
             love.graphics.print(item .. ": " .. count, screen_width / 4 + 40, screen_height / 4 + 10 + i * 20)
@@ -561,10 +612,18 @@ function drawCraftingMenu()
     end
 end
 
-function love.draw()
+function screens.game.draw()
     textDraw()
-    tileMappings = game.tileMap
-    tileNames = game.invMap
+    -- tileMappings = game.tileMap
+    tileMappings = {}
+    for i = 0, #game.tiles do
+        tileMappings[i] = game.tiles[i].image
+    end
+    -- tileNames = game.invMap
+    tileNames = {}
+    for i = 0, #game.tiles do
+        tileNames[i] = game.tiles[i].name
+    end
     drawGrid()
     drawPreview()
     love.graphics.setColor(1, 1, 1)
@@ -572,4 +631,21 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     drawFPS()
     drawCraftingMenu()
+end
+
+function love.load()
+    currentScreen = screens.title
+    currentScreen.load()
+end
+
+function love.update(dt)
+    currentScreen.update(dt)
+end
+
+function love.wheelmoved(x, y)
+    currentScreen.wheel(x, y)
+end
+
+function love.draw()
+    currentScreen.draw()
 end
