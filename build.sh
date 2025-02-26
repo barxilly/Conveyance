@@ -86,5 +86,5 @@ mkdir -p Build/Archive/$version
 mv Build/Conveyance-$version* Build/Archive/$version
 mv Build/Conveyance.love Build/Archive/$version
 
-echo "Build $version complete!"
+echo -e "\033[1;32mBuild $version complete\033[0m"
 sleep 1
