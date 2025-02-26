@@ -9,14 +9,13 @@ screens = {
     title = {}
 }
 
+screen_width = love.graphics.getWidth()
+screen_height = love.graphics.getHeight()
+
 --- TITLE
 -- LOAD
 
 function screens.title.load()
-    love.graphics.setDefaultFilter("nearest", "nearest")
-    title = love.graphics.newImage("assets/dirt.png")
-    title:setFilter("nearest", "nearest")
-    -- start playing bg1.waV
     bgm = {}
     bgm[1] = love.audio.newSource("assets/bgm.mp3", "stream")
     bgm[1]:play()
@@ -38,8 +37,7 @@ end
 
 -- DRAW
 function screens.title.draw()
-    love.graphics.draw(title, 0, 0, 0, love.graphics.getWidth() / title:getWidth(),
-        love.graphics.getHeight() / title:getHeight())
+    love.graphics.print("Press Enter / tap to start", screen_width / 2 - 100, screen_height / 2 - 10)
 end
 
 --- GAME
@@ -466,8 +464,7 @@ function textDraw()
 end
 
 function drawGrid()
-    screen_width = love.graphics.getWidth()
-    screen_height = love.graphics.getHeight()
+
     local cell_size = screen_height * zoomFactor / game.grid.height
     local grid_width = cell_size * game.grid.width
     local grid_height = screen_height * zoomFactor
