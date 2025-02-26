@@ -148,7 +148,7 @@ game.weight = {
 game.mobile = false
 if love.system.getOS() == 'iOS' or love.system.getOS() == 'Android' then
     game.mobile = true
-    game.grid.width = 20
-    game.grid.height = 20
+    game.grid.width = 25
+    game.grid.height = 15
 
 end
