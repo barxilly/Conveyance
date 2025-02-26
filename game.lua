@@ -4,7 +4,7 @@ require "images"
 game = {}
 
 --- Game version
-game.version = "0.1.1-proto"
+game.version = "0.1.2-proto"
 
 --- Whether to show the FPS counter
 game.showFPS = true

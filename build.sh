@@ -1,6 +1,6 @@
 # Get version number
 version=$(grep -oP 'game.version = "\K[^"]+' game.lua)
-echo -e "\033[1mBuilding Conveyance v$version\033[0m"
+echo -e "\033[1mBuilding Conveyance\033[0m"
 echo "Checking whether version should be updated"
 
 # If files with $version already exist, update version number
@@ -14,9 +14,11 @@ if [ -f Build/Archive/$version/Conveyance-$version.exe ]; then
     versionup="$versionup$suffix"
     sed -i "s/game.version = \"$version\"/game.version = \"$versionup\"/g" game.lua
     version=$(grep -oP 'game.version = "\K[^"]+' game.lua)
-    echo "Building Conveyance v$version"
-    sleep 3
+    sleep 1
 fi
+
+echo -e "\033[1mVersion: $version\033[0m"
+sleep 1
 
 ## Love File
 echo -e "\033[1mBuilding .love file\033[0m"
@@ -66,6 +68,7 @@ echo "Built Android"
 sleep 1
 
 ## Stage, Commit, and Push
+echo -e "\033[1mStaging, committing, and pushing changes\033[0m"
 git add .
 git commit -m "Build v$version"
 git push
