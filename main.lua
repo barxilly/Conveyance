@@ -305,7 +305,9 @@ function mousePress()
                 if grid[i][j] > 100 then
                     grid[i][j] = grid[i][j] - 100
                 end
-                if loadedTileInd == 5 and not (grid[i][j] == 3 or grid[i][j] == 103) then
+                if game.tiles[loadedTileInd].requires > 1 and
+                    not (grid[i][j] == game.tiles[loadedTileInd].requires or grid[i][j] == 100 +
+                        game.tiles[loadedTileInd].requires) then
                     hoverpvShake.time = 0.5
                 elseif storage[game.tiles[loadedTileInd].name] > 0 then
                     print(grid[i][j])

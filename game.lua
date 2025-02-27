@@ -51,7 +51,7 @@ end
 game = {}
 
 --- Game version
-game.version = "0.1.9-proto"
+game.version = "0.1.10-proto"
 
 --- Whether to show the FPS counter
 game.showFPS = true
@@ -76,35 +76,40 @@ game.tiles = {
         image = waterimage,
         func = nil,
         immutable = false,
-        weight = 0.8
+        weight = 0.8,
+        requires = -1
     },
     [1] = {
         name = "Dirt",
         image = dirtimage,
         func = nil,
         immutable = false,
-        weight = 0.5
+        weight = 0.5,
+        requires = -1
     },
     [2] = {
         name = "Sand",
         image = sandimage,
         func = nil,
         immutable = false,
-        weight = 0.35
+        weight = 0.35,
+        requires = -1
     },
     [3] = {
         name = "Stone",
         image = stoneimage,
         func = nil,
         immutable = false,
-        weight = 0.8
+        weight = 0.8,
+        requires = -1
     },
     [4] = {
-        name = "Tree",
+        name = "Wood",
         image = treeimage,
         func = nil,
         immutable = false,
-        weight = 0.6
+        weight = 0.6,
+        requires = -1
     },
     [5] = {
         name = "Quarry",
@@ -123,27 +128,52 @@ game.tiles = {
             end
         end,
         immutable = false,
-        weight = 0
+        weight = 0,
+        requires = 3
     },
     [6] = {
         name = "Storage",
         image = storageimage,
         func = nil,
         immutable = true,
-        weight = 0
+        weight = 0,
+        requires = -1
     },
     [7] = {
         name = "Conveyor",
         image = conveyorimage,
         func = nil,
         immutable = false,
-        weight = 0
+        weight = 0,
+        requires = -1
+    },
+    [8] = {
+        name = "Logger",
+        image = loggerimage,
+        func = function(globalclock, grid, storage)
+            if globalclock % love.math.random(7, 10) < 0.1 then
+                for i = 1, grid.width do
+                    for j = 1, grid.height do
+                        local storageGrid = getStorageGrid(grid)
+                        if (grid[i][j] == 8 or grid[i][j] == 108) and
+                            areTwoGridPointsConnected({i, j}, storageGrid, grid, 7) then
+                            storage["Wood"] = storage["Wood"] + math.floor(1, 2)
+                        end
+                    end
+                end
+            end
+        end,
+        immutable = false,
+        weight = 0,
+        requires = 4
     },
     [-1] = {
         name = "Error",
         image = errorimage,
         func = nil,
-        immutable = false
+        immutable = false,
+        weight = 0,
+        requires = -1
     }
 }
 
@@ -151,12 +181,11 @@ game.startStorage = {
     Water = 20,
     Dirt = 20,
     Sand = 20,
-    Tree = 20,
     Stone = 0,
-    Wood = 0,
+    Wood = 20,
     Quarry = 1,
     Storage = 0,
-    Logger = 0,
+    Logger = 1,
     Conveyor = 200
 }
 game.cmOpen = false
