@@ -1,11 +1,23 @@
-All Rights Reserved
+All Rights Reserved.
 
-Copyright (c) 2025 Ben Smith
+COPYRIGHT (c) 2025 BEN SMITH
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+Permission is hereby granted to any person obtaining a copy of this software and associated documentation files (the "Software"), to use the Software for personal purposes only, subject to the following conditions:
+
+1. PERMITTED USES:
+   a. You may build the Software from source and use it for personal purposes.
+   b. You may modify the source code and use it for personal purposes.
+   c. You may produce and distribute modifications of the Software, provided that such modifications do not contain the original source code. You may also commercially distribute modifications.
+
+2. PROHIBITED USES:
+   a. You may not distribute the Software, or any modified versions, in any form, except by providing a link to the original source code on GitHub.
+   b. You may not sell the Software or any modified versions.
+   c. You may not use the Software or any modified versions for commercial purposes.
+   d. You may not claim ownership of the Software or any modified versions.
+
+3. CONTENT OWNERSHIP:
+   a. Any content within the game itself, including but not limited to graphics, audio, and text, is the property of Ben Smith and may not be used for any purpose without express permission.
+   b. Any content created by the user, including but not limited to mods, maps, or fan art, is the property of the user and may be used for any purpose and licensed under any license.
+
+DISCLAIMER:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
