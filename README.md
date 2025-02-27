@@ -7,14 +7,14 @@
 
 Visit the [releases](releases) page and download the latest release/pre-release for your system. Conveyance currently supports:
 
-| Platform | File                 | Store                                                              |
-| -------- | -------------------- | ------------------------------------------------------------------ |
-| Windows  | [Releases](releases) | _Planned release on Steam and/or Microsoft Store_                  |
-| macOS    | [Releases](releases) | _App Store release dependant on personal budget_                   |
-| Debian   | [Releases](releases) | _Planned release on Snap Store_                                    |
-| Android  | [Releases](releases) | _Planned release on Play Store_                                    |
-| iOS      | N/A                  | _App Store release dependant on personal budget_                   |
-| Console  | N/A                  | _Unless demand is high enough there will not be a console release_ |
+| Platform | File                 | Store                                                                                                |
+| -------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
+| Windows  | [Releases](releases) | _Planned release on Steam and/or Microsoft Store_                                                    |
+| macOS    | [Releases](releases) | _App Store release dependant on personal budget_                                                     |
+| Debian   | [Releases](releases) | _Planned release on Snap Store_                                                                      |
+| Android  | [Releases](releases) | _Planned release on Play Store_                                                                      |
+| iOS      | N/A                  | _App Store release dependant on personal budget_                                                     |
+| Console  | N/A                  | _I'd have to rebuild Löve for each OS, unless I get very wealthy I do not have the time for that..._ |
 
 ## Play from Source
 

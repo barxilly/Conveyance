@@ -41,7 +41,7 @@ cat Build/love Build/Conveyance.love > Build/Conveyance-$version
 echo "Making AppImage"
 sleep 1
 chmod +x Build/squashfs-root/bin/Conveyance
- ./Build/aptool.AppImage Build/squashfs-root Build/Conveyance-$version.AppImage
+ ./Build/aptool.AppImage Build/squashfs-root Build/Conveyance-$version-Linux.AppImage
 echo "Built Linux"
 sleep 1
 
@@ -76,7 +76,7 @@ git push
 ## Upload to GitHub Releases
 read -p "Do you want to publish the release on GitHub? (y/N): " publish
 if [ "$publish" = "y" ]; then
-    gh release create v$version Build/Conveyance-$version-Windows-x64.zip Build/Conveyance-$version-MacOS.zip Build/Conveyance-$version-Android.apk
+    gh release create v$version Build/Conveyance-$version-Windows-x64.zip Build/Conveyance-$version-MacOS.zip Build/Conveyance-$version-Android.apk Build/Conveyance-$version-Linux.AppImage
 else
     echo "Release not published."
 fi
