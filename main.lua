@@ -197,6 +197,11 @@ function initVars()
 end
 
 function loadMusic()
+    bgm = {}
+    bgm[1] = love.audio.newSource("assets/bgm.mp3", "stream")
+    bgm[1]:play()
+    bgm[1]:setVolume(0.5)
+    bgm[1]:setLooping(true)
     bgm[2] = love.audio.newSource("assets/quietnoise.ogg", "stream")
     bgm[2]:play()
     bgm[2]:setVolume(0.3)
@@ -639,7 +644,7 @@ function screens.game.draw()
 end
 
 function love.load()
-    currentScreen = screens.title
+    currentScreen = screens.game
     currentScreen.load()
 end
 
