@@ -84,8 +84,8 @@ function loadGrid()
             end
         end
     end
-    local offsetX = love.math.random() * 1000
-    local offsetY = love.math.random() * 1000
+    offsetX = love.math.random() * 1000
+    offsetY = love.math.random() * 1000
     for i = 1, game.grid.width do
         for j = 1, game.grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
@@ -94,8 +94,8 @@ function loadGrid()
             end
         end
     end
-    local offsetX = love.math.random() * 1000
-    local offsetY = love.math.random() * 1000
+    offsetX = love.math.random() * 1000
+    offsetY = love.math.random() * 1000
     for i = 1, game.grid.width do
         for j = 1, game.grid.height do
             local noiseValue = love.math.noise(i / 10 + offsetX, j / 10 + offsetY)
@@ -127,6 +127,14 @@ function loadGrid()
     end
     local storageTile = landTiles[love.math.random(1, #landTiles)]
     grid[storageTile[1]][storageTile[2]] = 6
+    -- Surround the storage tile with conveyor tiles
+    local directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
+    for _, dir in ipairs(directions) do
+        local x, y = storageTile[1] + dir[1], storageTile[2] + dir[2]
+        if x >= 1 and x <= game.grid.width and y >= 1 and y <= game.grid.height then
+            grid[x][y] = 7
+        end
+    end
     local storageCount = 0
     for i = 1, game.grid.width do
         for j = 1, game.grid.height do
