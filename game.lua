@@ -51,7 +51,7 @@ end
 game = {}
 
 --- Game version
-game.version = "0.1.12-proto"
+game.version = "0.1.13-proto"
 
 --- Whether to show the FPS counter
 game.showFPS = true

@@ -10,3 +10,6 @@ conveyorimage = love.graphics.newImage("assets/conveyor.png")
 loggerimage = love.graphics.newImage("assets/error.png")
 
 errorimage = love.graphics.newImage("assets/error.png")
+
+craftingimage = love.graphics.newImage("assets/crafting.png")
+craftingimage.setFilter(craftingimage, "nearest", "nearest")

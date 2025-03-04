@@ -61,6 +61,8 @@ version_code=$(grep -oP 'app.version_code=\K[^ ]+' gradle.properties)
 version_code=$(($version_code + 1))
 python3 -c "import re; f = open('gradle.properties', 'r'); contents = f.read(); f.close(); contents = re.sub(r'app.version_code=(.*)', 'app.version_code=$version_code', contents); f = open('gradle.properties', 'w'); f.write(contents); f.close()"
 echo "Please head to Android Studio to build the APK. Press Enter once completed."
+# Open Android Studio "./home/ben/Downloads/android-studio/bin/studio.sh" as root
+sudo -u root bash -c "/home/ben/Downloads/android-studio/bin/studio"
 read
 cd ../../
 cp Build/love-android/app/build/outputs/apk/embedNoRecord/debug/app-embed-noRecord-debug.apk Build/Conveyance-$version-Android.apk

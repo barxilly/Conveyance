@@ -216,6 +216,14 @@ function loadMusic()
     bgm[2]:setLooping(true)
 end
 
+function loadCraftingButton()
+    cbutton = {}
+    cbutton.x = 115
+    cbutton.y = screen_height - 25
+    cbutton.width = 50
+    cbutton.height = 50
+end
+
 function screens.game.load()
     initVars()
     mobileActions()
@@ -231,6 +239,7 @@ function screens.game.load()
     loadGrid()
     loadInputVars()
     loadMusic()
+    loadCraftingButton()
 end
 
 -- UPDATE
@@ -288,6 +297,10 @@ function timers()
     end
 end
 
+function isPressingButton(x, y, button)
+    return x > button.x and x < button.x + button.width and y > button.y and y < button.y + button.height
+end
+
 function mousePress()
     local screen_width = love.graphics.getWidth()
     local screen_height = love.graphics.getHeight()
@@ -341,6 +354,11 @@ function mousePress()
             if not mouseHeld then
                 selectNextTile()
             end
+        end
+
+        if not mouseHeld and isPressingButton(mouse_x, mouse_y, cbutton) then
+            game.openCraftingMenu()
+            game.cmOpen = not game.cmOpen
         end
 
         mouseHeld = true
@@ -604,7 +622,14 @@ function tileNameToID(name)
     end
     return -1
 end
+function drawCraftingButton()
+    -- Draw assets/crafting.png
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(craftingimage, cbutton.x - cbutton.width, cbutton.y - cbutton.height, 0,
+        50 / craftingimage:getWidth(), 50 / craftingimage:getHeight())
+    love.graphics.setColor(1, 1, 1)
 
+end
 function drawCraftingMenu()
     if game.cmOpen then
         love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
@@ -633,6 +658,9 @@ function drawCraftingMenu()
 end
 
 function screens.game.draw()
+    -- draw game.version in bottom left
+    love.graphics.print("v" .. game.version, 10, screen_height - 20)
+
     textDraw()
     -- tileMappings = game.tileMap
     tileMappings = {}
@@ -651,6 +679,7 @@ function screens.game.draw()
     love.graphics.setColor(1, 1, 1)
     drawFPS()
     drawCraftingMenu()
+    drawCraftingButton()
 end
 
 function love.load()
