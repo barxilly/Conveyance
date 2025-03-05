@@ -738,25 +738,36 @@ end
 
 function drawSelectionMenu()
     if game.smOpen then
+        local screen_width = love.graphics.getWidth()
+        local screen_height = love.graphics.getHeight()
+        local menu_width = screen_width / 2
+        local menu_height = screen_height / 2
+        local menu_x = (screen_width - menu_width) / 2
+        local menu_y = (screen_height - menu_height) / 2
+        local tile_size = 35
+        local padding = 10
+
         love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
         love.graphics.rectangle("fill", 0, 0, screen_width, screen_height)
         love.graphics.setColor(0.8, 0.8, 0.8)
-        love.graphics.rectangle("fill", screen_width / 4, screen_height / 4, screen_width / 2, screen_height / 2)
+        love.graphics.rectangle("fill", menu_x, menu_y, menu_width, menu_height)
         love.graphics.setColor(0, 0, 0)
-        love.graphics.print("Select a tile to place", screen_width / 4 + 10, screen_height / 4 + 10)
+        love.graphics.print("Select a tile to place", menu_x + padding, menu_y + padding)
+
         local i = 0
         for _, tile in pairs(game.tiles) do
             i = i + 1
             love.graphics.setColor(1, 1, 1)
-            love.graphics.draw(tile.image, screen_width / 4 + 20, screen_height / 4 + 10 + i * 40, 0,
-                35 / tile.image:getWidth(), 35 / tile.image:getHeight())
+            love.graphics.draw(tile.image, menu_x + padding, menu_y + padding + i * (tile_size + padding), 0,
+                tile_size / tile.image:getWidth(), tile_size / tile.image:getHeight())
             love.graphics.setColor(0, 0, 0)
-            love.graphics.print(tile.name, screen_width / 4 + 60, screen_height / 4 + 10 + i * 40)
+            love.graphics.print(tile.name, menu_x + padding + tile_size + padding,
+                menu_y + padding + i * (tile_size + padding))
             selbuts[i] = {
-                x = screen_width / 4 + 20,
-                y = screen_height / 4 + 10 + i * 40,
-                width = 35,
-                height = 35,
+                x = menu_x + padding,
+                y = menu_y + padding + i * (tile_size + padding),
+                width = tile_size,
+                height = tile_size,
                 tile = tile.name
             }
         end

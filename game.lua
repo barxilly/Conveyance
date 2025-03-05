@@ -5,7 +5,7 @@ require "utils"
 game = {}
 
 --- Game version
-game.version = "0.1.14-proto"
+game.version = "0.1.15-proto"
 
 --- Whether to show the FPS counter
 game.showFPS = true
