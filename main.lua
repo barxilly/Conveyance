@@ -127,14 +127,14 @@ function loadGrid()
     end
     local storageTile = landTiles[love.math.random(1, #landTiles)]
     grid[storageTile[1]][storageTile[2]] = 6
-    -- Surround the storage tile with conveyor tiles
+    --[[-- Surround the storage tile with conveyor tiles
     local directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
     for _, dir in ipairs(directions) do
         local x, y = storageTile[1] + dir[1], storageTile[2] + dir[2]
         if x >= 1 and x <= game.grid.width and y >= 1 and y <= game.grid.height then
             grid[x][y] = 7
         end
-    end
+    end]]
     local storageCount = 0
     for i = 1, game.grid.width do
         for j = 1, game.grid.height do
@@ -183,7 +183,7 @@ function initVars()
     tile = 0
     clock = 0
     prev = false
-    globalclock = 0
+    globalclock = 1
     laststone = 0
     cameraOffsetX = 0
     cameraOffsetY = 0
@@ -202,6 +202,8 @@ function initVars()
         time = 0
     }
     lastOne = -1
+    selbuts = {}
+    selectedTime = 1
 end
 
 function loadMusic()
@@ -216,7 +218,7 @@ function loadMusic()
     bgm[2]:setLooping(true)
 end
 
-function loadCraftingButton()
+function loadButtons()
     cbutton = {}
     cbutton.x = 115
     cbutton.y = screen_height - 25
@@ -239,7 +241,7 @@ function screens.game.load()
     loadGrid()
     loadInputVars()
     loadMusic()
-    loadCraftingButton()
+    loadButtons()
 end
 
 -- UPDATE
@@ -312,7 +314,26 @@ function mousePress()
     local mouse_x, mouse_y = love.mouse.getPosition()
     local i = math.floor((mouse_x - grid_x) / cell_size) + 1
     local j = math.floor((mouse_y - grid_y) / cell_size) + 1
-    if love.mouse.isDown(1) and not game.cmOpen then
+    if game.cmOpen or game.smOpen then
+        game.menuOpen = true
+    else
+        game.menuOpen = false
+    end
+
+    if love.mouse.isDown(1) and game.menuOpen then
+        for i = 1, #selbuts do
+            if isPressingButton(mouse_x, mouse_y, selbuts[i]) then
+                loadedTileInd = tileNameToID(selbuts[i].tile)
+                print(selbuts[i].tile)
+                mouseHeld = true
+                selectedTime = globalclock
+                game.smOpen = false
+                game.menuOpen = false
+            end
+        end
+    end
+
+    if love.mouse.isDown(1) and (not game.menuOpen) and not ((globalclock - selectedTime) < 0.5) then
         if not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j) then
             if i >= 1 and i <= game.grid.width and j >= 1 and j <= game.grid.height then
                 if grid[i][j] > 100 then
@@ -323,7 +344,6 @@ function mousePress()
                         game.tiles[loadedTileInd].requires) then
                     hoverpvShake.time = 0.5
                 elseif storage[game.tiles[loadedTileInd].name] > 0 then
-                    print(grid[i][j])
                     if loadedTileInd == grid[i][j] then
                         previewShake.time = 0.5
                     elseif (game.tiles[grid[i][j]] or game.tiles[grid[i][j] - 100]).immutable or false then
@@ -352,7 +372,8 @@ function mousePress()
         -- If the mouse is pressed on the preview tile, change the value of the preview tile
         if preview_tile_i == 1 and preview_tile_j == 1 then
             if not mouseHeld then
-                selectNextTile()
+                -- selectNextTile()
+                game.smOpen = true
             end
         end
 
@@ -362,13 +383,13 @@ function mousePress()
         end
 
         mouseHeld = true
-    elseif (love.mouse.isDown(2) or (love.keyboard.isDown("q") and not keyHeld.q)) and not game.cmOpen then
+    elseif (love.mouse.isDown(2) or (love.keyboard.isDown("q") and not keyHeld.q)) and not game.menuOpen then
         if not mouseHeld then
             selectNextTile()
         end
         mouseHeld = true
-    else
-        if (not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j)) and not game.cmOpen then
+    elseif not game.menuOpen then
+        if (not mouseHeld or (currentCellMouseHeld[1] ~= i or currentCellMouseHeld[2] ~= j)) and not game.menuOpen then
             if i >= 1 and i <= game.grid.width and j >= 1 and j <= game.grid.height then
                 if grid[i][j] < 100 then
                     grid[i][j] = grid[i][j] + 100
@@ -484,7 +505,7 @@ end
 -- DRAW
 
 function textDraw()
-    todraw = instructions
+    --[[todraw = instructions
 
     if debugmode and not todraw[9] then
         table.insert(todraw, "Debug mode enabled.\nPress 'R' to reload the game's grid.")
@@ -493,7 +514,17 @@ function textDraw()
     end
 
     instructionsM.draw(todraw)
-    instructionsM.drawStorage(storage)
+    instructionsM.drawStorage(storage)]]
+end
+
+function rotateInPlace(x, y, angle, cx, cy)
+    local cos_angle = math.cos(angle)
+    local sin_angle = math.sin(angle)
+    local dx = x - cx
+    local dy = y - cy
+    local new_x = cos_angle * dx - sin_angle * dy + cx
+    local new_y = sin_angle * dx + cos_angle * dy + cy
+    return new_x, new_y
 end
 
 function drawGrid()
@@ -511,8 +542,56 @@ function drawGrid()
                 love.graphics.setColor(0.8, 0.8, 0.8)
             end
             texture = tileMappings[tile % 100] or waterimage
-            love.graphics.draw(texture, grid_x + (i - 1) * cell_size, grid_y + (j - 1) * cell_size, 0,
+            angle = 0
+            -- If it's a conveyor, and 2 bordering tiles are conveyors, then change the texture to conveyorcornerimage and rotate it
+            --[[ if tile == 7 then
+                local directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+                local checkingdir = directions[1]
+                local res = {
+                    right = false,
+                    left = false,
+                    up = false,
+                    down = false
+                }
+                for _, dir in ipairs(directions) do
+                    local x, y = i + dir[1], j + dir[2]
+                    if x >= 1 and x <= game.grid.width and y >= 1 and y <= game.grid.height then
+                        if grid[x][y] == 7 then
+                            if dir[1] == 1 then
+                                res.right = true
+                            elseif dir[1] == -1 then
+                                res.left = true
+                            elseif dir[2] == 1 then
+                                res.down = true
+                            elseif dir[2] == -1 then
+                                res.up = true
+                            end
+                        end
+                    end
+                end
+                if res.right and res.down then
+                    texture = conveyorcornerimage
+                    angle = 0
+                elseif res.right and res.up then
+                    texture = conveyorcornerimage
+                    angle = math.pi / 2
+                elseif res.left and res.down then
+                    texture = conveyorcornerimage
+                    angle = -math.pi / 2
+                elseif res.left and res.up then
+                    texture = conveyorcornerimage
+                    angle = math.pi
+                end
+
+                local cx, cy = grid_x + (i - 1) * cell_size + cell_size / 2,
+                    grid_y + (j - 1) * cell_size + cell_size / 2
+                x, y = rotateInPlace(grid_x, grid_y, angle, cx, cy)
+                love.graphics
+                    .draw(texture, x, y, angle, cell_size / texture:getWidth(), cell_size / texture:getHeight())
+            else]]
+            love.graphics.draw(texture, grid_x + (i - 1) * cell_size, grid_y + (j - 1) * cell_size, angle,
                 cell_size / texture:getWidth(), cell_size / texture:getHeight())
+            -- end
             love.graphics.setColor(1, 1, 1)
             local text = tostring(tile)
             local text_width = love.graphics.getFont():getWidth(text)
@@ -657,6 +736,33 @@ function drawCraftingMenu()
     end
 end
 
+function drawSelectionMenu()
+    if game.smOpen then
+        love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
+        love.graphics.rectangle("fill", 0, 0, screen_width, screen_height)
+        love.graphics.setColor(0.8, 0.8, 0.8)
+        love.graphics.rectangle("fill", screen_width / 4, screen_height / 4, screen_width / 2, screen_height / 2)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print("Select a tile to place", screen_width / 4 + 10, screen_height / 4 + 10)
+        local i = 0
+        for _, tile in pairs(game.tiles) do
+            i = i + 1
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(tile.image, screen_width / 4 + 20, screen_height / 4 + 10 + i * 40, 0,
+                35 / tile.image:getWidth(), 35 / tile.image:getHeight())
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.print(tile.name, screen_width / 4 + 60, screen_height / 4 + 10 + i * 40)
+            selbuts[i] = {
+                x = screen_width / 4 + 20,
+                y = screen_height / 4 + 10 + i * 40,
+                width = 35,
+                height = 35,
+                tile = tile.name
+            }
+        end
+    end
+end
+
 function screens.game.draw()
     -- draw game.version in bottom left
     love.graphics.print("v" .. game.version, 10, screen_height - 20)
@@ -680,6 +786,7 @@ function screens.game.draw()
     drawFPS()
     drawCraftingMenu()
     drawCraftingButton()
+    drawSelectionMenu()
 end
 
 function love.load()
