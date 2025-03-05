@@ -744,7 +744,7 @@ function drawSelectionMenu()
         local menu_height = screen_height / 2
         local menu_x = (screen_width - menu_width) / 2
         local menu_y = (screen_height - menu_height) / 2
-        local tile_size = 35
+        local tile_size = screen_height / 35
         local padding = 10
 
         love.graphics.setColor(0.5, 0.5, 0.5, 0.5)
@@ -752,7 +752,7 @@ function drawSelectionMenu()
         love.graphics.setColor(0.8, 0.8, 0.8)
         love.graphics.rectangle("fill", menu_x, menu_y, menu_width, menu_height)
         love.graphics.setColor(0, 0, 0)
-        love.graphics.print("Select a tile to place", menu_x + padding, menu_y + padding)
+        love.graphics.print("Select a tile to place:", menu_x + padding, menu_y + padding)
 
         local i = 0
         for _, tile in pairs(game.tiles) do
