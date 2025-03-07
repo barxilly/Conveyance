@@ -300,7 +300,9 @@ function timers()
 end
 
 function isPressingButton(x, y, button)
-    return x > button.x and x < button.x + button.width and y > button.y and y < button.y + button.height
+
+    return x >= button.x - button.width and x <= button.x + button.width and y >= button.y - button.height and y <=
+               button.y + button.height
 end
 
 function mousePress()
@@ -379,7 +381,7 @@ function mousePress()
 
         if not mouseHeld and isPressingButton(mouse_x, mouse_y, cbutton) then
             game.openCraftingMenu()
-            game.cmOpen = not game.cmOpen
+            game.cmOpen = true
         end
 
         mouseHeld = true
@@ -414,7 +416,13 @@ end
 function keyPress()
     if love.keyboard.isDown("escape") then
         if not keyHeld.escape then
-            love.event.quit()
+            if game.cmOpen then
+                game.cmOpen = false
+            elseif game.smOpen then
+                game.smOpen = false
+            else
+                love.event.quit()
+            end
             keyHeld.escape = true
         end
     else

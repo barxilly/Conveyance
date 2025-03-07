@@ -16,7 +16,6 @@ function game.test()
 end
 
 function game.openCraftingMenu(text, cmOpen)
-
 end
 
 --- Load Grid
